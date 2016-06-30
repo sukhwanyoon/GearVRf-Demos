@@ -15,6 +15,8 @@ import org.gearvrf.io.cursor3d.SelectableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior.ObjectState;
 import org.gearvrf.io.cursor3d.SelectableBehavior.StateChangedListener;
 import org.gearvrf.scene_objects.GVRConeSceneObject;
+import org.gearvrf.scene_objects.GVRCubeSceneObject;
+import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.utility.Log;
 
 import java.util.HashSet;
@@ -24,13 +26,14 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
     public static final String TAG = EditableBehavior.class.getSimpleName();
     private static final float SCALEUP_FACTOR = 1.1f;
     private static final float SCALEDOWN_FACTOR = 0.9f;
-    private static long TYPE_EDITABLE = 0;
+    private static long TYPE_EDITABLE = ((long)EditableBehavior.class.hashCode() << 32) & (System
+            .currentTimeMillis() & 0xffffffff);;
     private static final float MENU_RADIUS_OFFSET = 0.2f;
     private CursorManager cursorManager;
     private GVRScene scene;
     private Set<SelectableBehavior> behaviors;
     private enum MenuItem{
-        SCALEUP, SCALEDOWN, ROTATEX, ROTATEY, ROTATEZ
+        SCALEUP, SCALEDOWN, ROTATEX
     }
     private GVRSceneObject menuRoot;
 
@@ -44,11 +47,19 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
 
         float[] position = new float[] { 0, 0, 0};
         GVRConeSceneObject scaleUpObject = new GVRConeSceneObject(gvrContext, true);
+        position[1] = -0.6f;
         addMenuItem(gvrContext, scaleUpObject, this, MenuItem.SCALEUP, position, 0.5f, 0);
 
         GVRConeSceneObject scaleDownObject = new GVRConeSceneObject(gvrContext, true);
-        position[0] += 0.5f;
+        position[0] = 0.5f;
+        position[1] = -0.6f;
         addMenuItem(gvrContext, scaleDownObject,this,MenuItem.SCALEDOWN, position, 0.5f, 180);
+
+        GVRSphereSceneObject rotateObject = new GVRSphereSceneObject(gvrContext, true);
+        position[0] = 0.25f;
+        position[1] = 0.0f;
+        addMenuItem(gvrContext, rotateObject, this, MenuItem.ROTATEX, position, 0.3f, 0);
+
 
     }
 
@@ -58,15 +69,12 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
         BoundingVolume volume = newOwner.getBoundingVolume();
         Log.d(TAG,"radius of attached object is:%f", volume.radius);
         menuRoot.getTransform().setPositionX(volume.radius + MENU_RADIUS_OFFSET);
+        menuRoot.getTransform().setPositionY(0.5f);
         Log.d(TAG,"Adding the menu as a child");
         newOwner.addChildObject(menuRoot);
     }
-
-
+    
     public static long getComponentType() {
-        if(TYPE_EDITABLE == 0) {
-            TYPE_EDITABLE = getNewType();
-        }
         return TYPE_EDITABLE;
     }
 
@@ -121,9 +129,10 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
 
     @Override
     public void onStateChanged(SelectableBehavior behavior, ObjectState prev, ObjectState current) {
+        MenuItem item = (MenuItem) behavior.getOwnerObject().getTag();
+        GVRTransform transform = getOwnerObject().getTransform();
         if(current == ObjectState.CLICKED) {
-            MenuItem item = (MenuItem) behavior.getOwnerObject().getTag();
-            GVRTransform transform = getOwnerObject().getTransform();
+
             float[] scale = new float[]{transform.getScaleX(), transform.getScaleY(),
                     transform.getScaleZ()};
             switch (item) {
@@ -136,11 +145,8 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
                             SCALEUP_FACTOR, scale[2] * SCALEUP_FACTOR);
                     break;
                 case ROTATEX:
-
-                    break;
-                case ROTATEY:
-                    break;
-                case ROTATEZ:
+                    float rotation = transform.getRotationPitch();
+                    transform.setRotationByAxis(rotation + 5, 1, 0, 0);
                     break;
             }
         }

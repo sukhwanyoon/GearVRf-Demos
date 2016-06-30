@@ -99,7 +99,8 @@ public class CursorMain extends GVRMain {
 
         movableCubeBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
-            public void onStateChanged(ObjectState prev, ObjectState current) {
+            public void onStateChanged(SelectableBehavior selectableBehavior, ObjectState prev,
+                                       ObjectState current) {
                 if(current == ObjectState.CLICKED) {
                     GVRTransform transform = astronaut.getTransform();
                     transform.setPositionZ(transform.getPositionZ() - 1);
@@ -162,7 +163,8 @@ public class CursorMain extends GVRMain {
 
         movableBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
-            public void onStateChanged(ObjectState prev, ObjectState current) {
+            public void onStateChanged(SelectableBehavior selectableBehavior, ObjectState prev,
+                                       ObjectState current) {
                 if(current == ObjectState.CLICKED) {
                     GVRTransform transform = astronaut.getTransform();
                     transform.setPositionZ(transform.getPositionZ() + 1);
