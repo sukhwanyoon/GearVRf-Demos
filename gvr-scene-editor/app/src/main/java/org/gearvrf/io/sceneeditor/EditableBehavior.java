@@ -73,7 +73,7 @@ public class EditableBehavior extends GVRBehavior implements StateChangedListene
         Log.d(TAG,"Adding the menu as a child");
         newOwner.addChildObject(menuRoot);
     }
-    
+
     public static long getComponentType() {
         return TYPE_EDITABLE;
     }
