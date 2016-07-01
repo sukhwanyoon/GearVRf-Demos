@@ -19,14 +19,14 @@ import android.os.Bundle;
 
 import org.gearvrf.GVRActivity;
 
-public class CursorActivity extends GVRActivity {
-    private static final String TAG = CursorActivity.class.getSimpleName();
-    private CursorMain cursorMain;
+public class SceneEditorActivity extends GVRActivity {
+    private static final String TAG = SceneEditorActivity.class.getSimpleName();
+    private SceneEditorMain cursorMain;
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        cursorMain = new CursorMain();
+        cursorMain = new SceneEditorMain();
         setMain(cursorMain, "gvr.xml");
     }
 

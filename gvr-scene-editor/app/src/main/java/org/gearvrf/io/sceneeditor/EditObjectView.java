@@ -15,56 +15,124 @@
 
 package org.gearvrf.io.sceneeditor;
 
-import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 
-import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
-import org.gearvrf.io.cursor3d.CustomKeyEvent;
-import org.gearvrf.io.cursor3d.R;
+import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRTransform;
 import org.gearvrf.utility.Log;
+import org.joml.Quaternionf;
 
-class EditObjectView extends BaseView implements View.OnClickListener {
+class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChangeListener {
     private static final String TAG = EditObjectView.class.getSimpleName();
+    private static final float SCALEUP_FACTOR = 1.1f;
+    private static final float SCALEDOWN_FACTOR = 0.9f;
+    private WindowCloseListener windowCloseListener;
+    private GVRSceneObject sceneObject;
+    private SeekBar sbYaw,sbPitch, sbRoll;
+    private int prevYaw, prevPitch, prevRoll;
+
+    enum ScaleDirection {
+        SCALE_UP, SCALE_DOWN
+    }
+
+    interface WindowCloseListener {
+        void onClose();
+    }
 
     //Called on main thread
-    EditObjectView(final GVRContext context, final GVRScene scene, int settingsCursorId) {
+    EditObjectView(final GVRContext context, final GVRScene scene, int settingsCursorId,
+                   WindowCloseListener windowCloseListener) {
         super(context, scene, settingsCursorId, R.layout.edit_object_layout);
-        render(5.0f, 0.0f, BaseView.QUAD_DEPTH);
+        ((Button) findViewById(R.id.bDone)).setOnClickListener(this);
+        ((Button) findViewById(R.id.bScaleUp)).setOnClickListener(this);
+        ((Button) findViewById(R.id.bScaleDown)).setOnClickListener(this);
+        sbYaw = (SeekBar) findViewById(R.id.sbYaw);
+        sbYaw.setOnSeekBarChangeListener(this);
+
+        sbPitch = (SeekBar) findViewById(R.id.sbPitch);
+        sbPitch.setOnSeekBarChangeListener(this);
+
+        sbRoll = (SeekBar) findViewById(R.id.sbRoll);
+        sbRoll.setOnSeekBarChangeListener(this);
+
+
+        this.windowCloseListener = windowCloseListener;
+    }
+
+    public void setSceneObject(GVRSceneObject attachedSceneObject) {
+        this.sceneObject = attachedSceneObject;
+    }
+
+    public void render( float x, float y, float z) {
+        super.render(x, y, z);
     }
 
     @Override
     public void onClick(View v) {
-        int id = v.getId();
-        if (id == R.id.tvBackButton) {
-            navigateBack(false);
-        } else if (id == R.id.done) {
-            Log.d(TAG, "Done clicked, close menu");
-            navigateBack(true);
+        switch (v.getId()) {
+            case R.id.bDone:
+                hide();
+                windowCloseListener.onClose();
+                break;
+            case R.id.bScaleUp:
+                scaleObject(ScaleDirection.SCALE_UP);
+                break;
+            case R.id.bScaleDown:
+                scaleObject(ScaleDirection.SCALE_DOWN);
+                break;
         }
     }
 
-    private void navigateBack(boolean cascading) {
-        hide();
+    private void scaleObject(ScaleDirection direction) {
+        GVRTransform transform = sceneObject.getTransform();
+        float[] scale = new float[]{transform.getScaleX(), transform.getScaleY(),
+                transform.getScaleZ()};
+
+        if (direction == ScaleDirection.SCALE_DOWN) {
+            transform.setScale(scale[0] * SCALEDOWN_FACTOR,
+                    scale[1] * SCALEDOWN_FACTOR, scale[2] * SCALEDOWN_FACTOR);
+        } else {
+            transform.setScale(scale[0] * SCALEUP_FACTOR, scale[1] *
+                    SCALEUP_FACTOR, scale[2] * SCALEUP_FACTOR);
+        }
     }
 
     @Override
-    void onSwipeEvent(KeyEvent keyEvent) {
-        switch (keyEvent.getKeyCode()) {
-            case CustomKeyEvent.KEYCODE_SWIPE_LEFT:
-                Log.d(TAG, "Swipe left");
-                //Back event: Issue normal back
-                navigateBack(false);
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        GVRTransform transform = sceneObject.getTransform();
+        float angle;
+        switch (seekBar.getId()) {
+            case R.id.sbYaw:
+                angle = (progress - prevYaw)*3.6f;
+                transform.rotateByAxis(angle,0,1,0);
+                prevYaw = progress;
                 break;
-            case CustomKeyEvent.KEYCODE_SWIPE_RIGHT:
-                Log.d(TAG, "Swipe right");
-                //OK event: Issue cascading back
-                navigateBack(true);
+            case R.id.sbPitch:
+                angle = (progress - prevPitch)*3.6f;
+                transform.rotateByAxis(angle,1,0,0);
+                prevPitch = progress;
                 break;
-            default:
-                //No need to handle other event types
+            case R.id.sbRoll:
+                angle = (progress - prevRoll)*3.6f;
+                transform.rotateByAxis(angle,0,0,1);
+                prevRoll = progress;
                 break;
         }
     }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+    }
+
 }
