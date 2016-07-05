@@ -33,7 +33,7 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
                 editableView = new EditObjectView(getGVRContext(), scene, cursorControllerId,
                         EditableBehavior.this);
                 editableView.setSceneObject(newOwner);
-                editableView.render(lookAt[0]*5.0f,lookAt[1]*5.0f,lookAt[2]*5.0f);
+                editableView.render(-1.0f,0,-10f);
             }
         });
     }

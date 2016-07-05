@@ -52,15 +52,16 @@ public class SceneEditorMain extends GVRMain {
     @Override
     public void onInit(final GVRContext gvrContext) {
         mainScene = gvrContext.getNextMainScene();
-        mainScene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.BLACK);
-        mainScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.BLACK);
+        mainScene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.DKGRAY);
+        mainScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.DKGRAY);
         cursorManager = new CursorManager(gvrContext, mainScene);
         editableBehavior = new EditableBehavior(cursorManager, mainScene);
         float[] position = new float[]{0.0f, 0.0f, -5.0f};
         GVRMaterial material = new GVRMaterial(gvrContext);
         material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext,R.mipmap
                 .ic_launcher)));
-        final GVRConeSceneObject cubeSceneObject = new GVRConeSceneObject(gvrContext, true,material);
+        final GVRCubeSceneObject cubeSceneObject = new GVRCubeSceneObject(gvrContext, true,
+                material);
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
         MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
         cubeSceneObject.attachComponent(movableCubeBehavior);
