@@ -30,16 +30,21 @@ import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRBaseSensor;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
+import org.gearvrf.GVRSceneObject;
 import org.gearvrf.ISensorEvents;
 import org.gearvrf.SensorEvent;
 import org.gearvrf.io.cursor3d.CustomKeyEvent;
 import org.gearvrf.scene_objects.GVRViewSceneObject;
 import org.gearvrf.scene_objects.view.GVRFrameLayout;
+import org.gearvrf.utility.Log;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.util.List;
 
 abstract class BaseView {
     private static final String TAG = BaseView.class.getSimpleName();
+    private static final Vector3f INITIAL_ROTATION = new Vector3f(0.0f, 0.0f, -1.0f);
     private static final float QUAD_X = 10.0f;
     private static final float QUAD_Y = 8f;
     public static final float QUAD_DEPTH = -13f;
@@ -62,6 +67,8 @@ abstract class BaseView {
     private final static PointerCoords[] pointerCoordsArray;
     private final static PointerCoords pointerCoords;
     int settingsCursorId;
+    private Vector3f cross;
+    private Quaternionf rotation;
 
     static {
         PointerProperties properties = new PointerProperties();
@@ -91,19 +98,31 @@ abstract class BaseView {
         frameLayout.setBackgroundColor(Color.TRANSPARENT);
         View.inflate(activity, layoutID, frameLayout);
         glThreadHandler = new Handler(Looper.getMainLooper());
+        //INITIAL_ROTATION = new Vector3f(0.0f, 0.0f, -1.0f);
+        cross = new Vector3f();
+        rotation = new Quaternionf();
     }
 
-    void render(final float x, final float y, final float z) {
+    void render(float x, final float y, float z) {
+        final Vector3f endPosition = new Vector3f(x, y, z);
         glThreadHandler.post(new Runnable() {
             @Override
             public void run() {
                 layoutSceneObject = new GVRViewSceneObject(context, frameLayout,
                         context.createQuad(quadWidth, quadHeight));
-                layoutSceneObject.getTransform().setPosition(x, y, z);
+                layoutSceneObject.getTransform().setPosition(0, 0, -10.0f);
+                float yaw = context.getNextMainScene().getMainCameraRig().getTransform()
+                        .getRotationYaw();
+                Log.d(TAG,"ROTATION Y :%f",yaw);
                 layoutSceneObject.setSensor(new GVRBaseSensor(context));
                 layoutSceneObject.getEventReceiver().addListener(sensorEvents);
                 frameWidth = frameLayout.getWidth();
                 frameHeight = frameLayout.getHeight();
+                layoutSceneObject.getTransform().rotateByAxisWithPivot(yaw,0,1,0,0,0,0);
+//                computeRotation(INITIAL_ROTATION,endPosition);
+//                layoutSceneObject.getTransform().rotateWithPivot(rotation.w, rotation.x, rotation.y,
+//                        rotation.z, 0, 0, 0);
+                //layoutSceneObject.getTransform().rotateByAxisWithPivot(-45, 1, 0, 0, 0, 0, 0);
                 show();
             }
         });
@@ -213,5 +232,30 @@ abstract class BaseView {
 
     boolean isSensorEnabled() {
         return sensorEnabled;
+    }
+
+    GVRSceneObject getSceneObject() {
+        return layoutSceneObject;
+    }
+
+    private void computeRotation(Vector3f start, Vector3f end) {
+        float norm_u_norm_v = (float) Math.sqrt(start.dot(start) * end.dot(end));
+        float real_part = norm_u_norm_v + start.dot(end);
+
+        if (real_part < 1.e-6f * norm_u_norm_v) {
+        /* If u and v are exactly opposite, rotate 180 degrees
+         * around an arbitrary orthogonal axis. Axis normalisation
+         * can happen later, when we normalise the quaternion. */
+            real_part = 0.0f;
+            if (Math.abs(start.x) > Math.abs(start.z)) {
+                cross = new Vector3f(-start.y, start.x, 0.f);
+            } else {
+                cross = new Vector3f(0.f, -start.z, start.y);
+            }
+        } else {
+                /* Otherwise, build quaternion the standard way. */
+            start.cross(end, cross);
+        }
+        rotation.set(cross.x, cross.y, cross.z, real_part).normalize();
     }
 }

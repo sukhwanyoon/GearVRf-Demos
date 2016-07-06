@@ -5,6 +5,7 @@ import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.sceneeditor.EditObjectView.WindowCloseListener;
+import org.gearvrf.utility.Log;
 
 public class EditableBehavior extends GVRBehavior implements WindowCloseListener {
     public static final String TAG = EditableBehavior.class.getSimpleName();
@@ -30,10 +31,12 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
         getGVRContext().getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                float yaw = scene.getMainCameraRig().getTransform().getRotationYaw();
+                Log.d(TAG,"Yaw at start:%f",yaw);
                 editableView = new EditObjectView(getGVRContext(), scene, cursorControllerId,
                         EditableBehavior.this);
                 editableView.setSceneObject(newOwner);
-                editableView.render(-1.0f,0,-10f);
+                editableView.render(lookAt[0],lookAt[1],lookAt[2]);
             }
         });
     }
@@ -43,6 +46,8 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
         cursorManager.disableSettingsCursor();
         getOwnerObject().detachComponent(getComponentType());
     }
+
+
 
     public static long getComponentType() {
         return TYPE_EDITABLE;
