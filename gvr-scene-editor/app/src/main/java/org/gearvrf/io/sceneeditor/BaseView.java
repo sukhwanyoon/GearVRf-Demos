@@ -36,7 +36,7 @@ import org.gearvrf.SensorEvent;
 import org.gearvrf.io.cursor3d.CustomKeyEvent;
 import org.gearvrf.scene_objects.GVRViewSceneObject;
 import org.gearvrf.scene_objects.view.GVRFrameLayout;
-import org.gearvrf.utility.Log;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -58,7 +58,7 @@ abstract class BaseView {
     private float halfQuadWidth;
     GVRScene scene;
     GVRActivity activity;
-    GVRContext context;
+    GVRContext gvrContext;
     private GVRViewSceneObject layoutSceneObject;
     private boolean sensorEnabled = true;
 
@@ -85,7 +85,7 @@ abstract class BaseView {
 
     BaseView(GVRContext context, GVRScene scene, int settingsCursorId, int layoutID, float
             quadHeight, float quadWidth) {
-        this.context = context;
+        this.gvrContext = context;
         this.scene = scene;
         this.settingsCursorId = settingsCursorId;
         this.quadHeight = quadHeight;
@@ -103,30 +103,45 @@ abstract class BaseView {
         rotation = new Quaternionf();
     }
 
-    void render(float x, final float y, float z) {
-        final Vector3f endPosition = new Vector3f(x, y, z);
+    void renderEditObjectView() {
         glThreadHandler.post(new Runnable() {
             @Override
             public void run() {
-                layoutSceneObject = new GVRViewSceneObject(context, frameLayout,
-                        context.createQuad(quadWidth, quadHeight));
-                layoutSceneObject.getTransform().setPosition(0, 0, -10.0f);
-                float yaw = context.getNextMainScene().getMainCameraRig().getTransform()
-                        .getRotationYaw();
-                Log.d(TAG,"ROTATION Y :%f",yaw);
-                layoutSceneObject.setSensor(new GVRBaseSensor(context));
+                layoutSceneObject = new GVRViewSceneObject(gvrContext, frameLayout,
+                        gvrContext.createQuad(quadWidth, quadHeight));
+                layoutSceneObject.getTransform().setPosition(0,0,-10);
+                layoutSceneObject.getTransform().rotateByAxisWithPivot(-35,1,0,0,0,0,0);
+                Matrix4f cameraMatrix = gvrContext.getMainScene().getMainCameraRig().getHeadTransform()
+                        .getModelMatrix4f();
+                Matrix4f objectMatrix = layoutSceneObject.getTransform().getModelMatrix4f();
+                Matrix4f finalMatrix = cameraMatrix.mul(objectMatrix);
+                layoutSceneObject.getTransform().setModelMatrix(finalMatrix);
+
+                layoutSceneObject.setSensor(new GVRBaseSensor(gvrContext));
                 layoutSceneObject.getEventReceiver().addListener(sensorEvents);
                 frameWidth = frameLayout.getWidth();
                 frameHeight = frameLayout.getHeight();
-                layoutSceneObject.getTransform().rotateByAxisWithPivot(yaw,0,1,0,0,0,0);
-//                computeRotation(INITIAL_ROTATION,endPosition);
-//                layoutSceneObject.getTransform().rotateWithPivot(rotation.w, rotation.x, rotation.y,
-//                        rotation.z, 0, 0, 0);
-                //layoutSceneObject.getTransform().rotateByAxisWithPivot(-45, 1, 0, 0, 0, 0, 0);
                 show();
             }
         });
     }
+
+    void renderFileBrowser() {
+        glThreadHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                layoutSceneObject = new GVRViewSceneObject(gvrContext, frameLayout,
+                        gvrContext.createQuad(quadWidth, quadHeight));
+                layoutSceneObject.getTransform().setPosition(0,0,-10);
+                layoutSceneObject.setSensor(new GVRBaseSensor(gvrContext));
+                layoutSceneObject.getEventReceiver().addListener(sensorEvents);
+                frameWidth = frameLayout.getWidth();
+                frameHeight = frameLayout.getHeight();
+                show();
+            }
+        });
+    }
+
 
     private ISensorEvents sensorEvents = new ISensorEvents() {
         @Override

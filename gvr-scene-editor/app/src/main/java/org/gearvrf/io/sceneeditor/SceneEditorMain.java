@@ -23,9 +23,6 @@ import org.gearvrf.GVRBitmapTexture;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
-import org.gearvrf.GVRMesh;
-import org.gearvrf.GVRPhongShader;
-import org.gearvrf.GVRRenderData.GVRRenderingOrder;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
@@ -34,9 +31,10 @@ import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior.ObjectState;
 import org.gearvrf.io.cursor3d.SelectableBehavior.StateChangedListener;
-import org.gearvrf.scene_objects.GVRConeSceneObject;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.utility.Log;
+
+import java.io.IOException;
 
 /**
  * This sample can be used with a Laser Cursor as well as an Object Cursor. By default the Object
@@ -45,44 +43,55 @@ import org.gearvrf.utility.Log;
  */
 public class SceneEditorMain extends GVRMain {
     private static final String TAG = SceneEditorMain.class.getSimpleName();
+    private static final String FILEBROWSER_ASSET = "folder.fbx";
     private GVRScene mainScene;
     private CursorManager cursorManager;
     private EditableBehavior editableBehavior;
+    private GVRContext gvrContext;
 
     @Override
-    public void onInit(final GVRContext gvrContext) {
+    public void onInit(GVRContext gvrContext) {
+        this.gvrContext = gvrContext;
         mainScene = gvrContext.getNextMainScene();
         mainScene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.DKGRAY);
         mainScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.DKGRAY);
         cursorManager = new CursorManager(gvrContext, mainScene);
         editableBehavior = new EditableBehavior(cursorManager, mainScene);
+
         float[] position = new float[]{0.0f, 0.0f, -5.0f};
         GVRMaterial material = new GVRMaterial(gvrContext);
-        material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext,R.mipmap
+        material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext, R.mipmap
                 .ic_launcher)));
         final GVRCubeSceneObject cubeSceneObject = new GVRCubeSceneObject(gvrContext, true,
                 material);
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
-        MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
-        cubeSceneObject.attachComponent(movableCubeBehavior);
-        mainScene.addSceneObject(cubeSceneObject);
+        addToSceneEditor(cubeSceneObject);
+    }
 
-        movableCubeBehavior.setStateChangedListener(new StateChangedListener() {
-            @Override
-            public void onStateChanged(final SelectableBehavior behavior, ObjectState prev,
-                                       ObjectState
-                    current) {
-                if(prev == ObjectState.CLICKED) {
-                    if(behavior.getOwnerObject().getComponent(EditableBehavior
-                            .getComponentType()) == null) {
-                        Log.d(TAG,"Attaching Editable Behavior");
-                        behavior.getOwnerObject().attachComponent(editableBehavior);
+    private void addFileBrowserIcon() {
+        try {
+            GVRSceneObject fileBrowserIcon = gvrContext.loadModel(FILEBROWSER_ASSET);
+            SelectableBehavior selectableBehavior = new SelectableBehavior(cursorManager);
+            fileBrowserIcon.attachComponent(selectableBehavior);
+            selectableBehavior.setStateChangedListener(new StateChangedListener() {
+                @Override
+                public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
+                                           ObjectState current) {
+                    if (current == ObjectState.CLICKED) {
+
                     }
-                }
-            }
-        });
+               }
+            });
+        } catch (IOException e) {
+            Log.e(TAG, "Could not load file browser icon:%s", e.getMessage());
+        }
+    }
 
-
+    private void addToSceneEditor(GVRSceneObject newSceneObject) {
+        MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
+        newSceneObject.attachComponent(movableCubeBehavior);
+        mainScene.addSceneObject(newSceneObject);
+        movableCubeBehavior.setStateChangedListener(stateChangedListener);
     }
 
     @Override
@@ -103,4 +112,19 @@ public class SceneEditorMain extends GVRMain {
         // return the correct splash screen bitmap
         return new GVRBitmapTexture(gvrContext, bitmap);
     }
+
+    private StateChangedListener stateChangedListener = new StateChangedListener() {
+        @Override
+        public void onStateChanged(final SelectableBehavior behavior, ObjectState prev,
+                                   ObjectState
+                                           current) {
+            if (prev == ObjectState.CLICKED) {
+                if (behavior.getOwnerObject().getComponent(EditableBehavior
+                        .getComponentType()) == null) {
+                    Log.d(TAG, "Attaching Editable Behavior");
+                    behavior.getOwnerObject().attachComponent(editableBehavior);
+                }
+            }
+        }
+    };
 }

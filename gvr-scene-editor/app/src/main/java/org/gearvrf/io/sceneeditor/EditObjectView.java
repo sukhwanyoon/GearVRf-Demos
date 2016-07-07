@@ -43,6 +43,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
 
     interface WindowCloseListener {
         void onClose();
+        void onScaleChange();
     }
 
     //Called on main thread
@@ -69,8 +70,8 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
         this.sceneObject = attachedSceneObject;
     }
 
-    public void render( float x, float y, float z) {
-        super.render(x, y, z);
+    public void render() {
+        super.renderEditObjectView();
     }
 
     @Override
@@ -82,9 +83,11 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
                 break;
             case R.id.bScaleUp:
                 scaleObject(ScaleDirection.SCALE_UP);
+                windowCloseListener.onScaleChange();
                 break;
             case R.id.bScaleDown:
                 scaleObject(ScaleDirection.SCALE_DOWN);
+                windowCloseListener.onScaleChange();
                 break;
         }
     }
