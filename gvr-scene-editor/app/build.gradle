@@ -22,7 +22,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "org.gearvrf.io.cursorsimple"
+        applicationId "org.gearvrf.io.sceneeditor"
         minSdkVersion 19
         targetSdkVersion 19
     }

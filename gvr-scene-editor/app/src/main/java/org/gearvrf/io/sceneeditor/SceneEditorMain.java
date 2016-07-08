@@ -23,18 +23,26 @@ import org.gearvrf.GVRBitmapTexture;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
+import org.gearvrf.GVRMesh;
+import org.gearvrf.GVRPhongShader;
+import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRShaderTemplate;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior.ObjectState;
 import org.gearvrf.io.cursor3d.SelectableBehavior.StateChangedListener;
+import org.gearvrf.io.sceneeditor.EditObjectView.WindowCloseListener;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
+import org.gearvrf.scene_objects.GVRModelSceneObject;
 import org.gearvrf.utility.Log;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 /**
  * This sample can be used with a Laser Cursor as well as an Object Cursor. By default the Object
@@ -43,7 +51,8 @@ import java.io.IOException;
  */
 public class SceneEditorMain extends GVRMain {
     private static final String TAG = SceneEditorMain.class.getSimpleName();
-    private static final String FILEBROWSER_ASSET = "folder.fbx";
+    private static final String FILEBROWSER_ASSET = "generic-houses-1.fbx";
+    private static final float TARGET_RADIUS = 1.0f;
     private GVRScene mainScene;
     private CursorManager cursorManager;
     private EditableBehavior editableBehavior;
@@ -66,25 +75,80 @@ public class SceneEditorMain extends GVRMain {
                 material);
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
         addToSceneEditor(cubeSceneObject);
+        addFileBrowserIcon();
+    }
+
+    private void loadModelToScene(String modelFileName) {
+        try {
+            GVRSceneObject model = gvrContext.loadModelFromSD(modelFileName);
+            model = model.getChildByIndex(0);
+            model.getParent().removeChildObject(model);
+            model.getTransform().setPosition(0,0,-5);
+            addToSceneEditor(model);
+            int end = modelFileName.lastIndexOf(".");
+            int start = modelFileName.lastIndexOf(File.separator, end) + 1;
+            String name = "so_" + modelFileName.substring(start, end);
+            model.setName(name);
+        } catch (IOException e) {
+            Log.e(TAG,"Could not load model:" + modelFileName  + e.getMessage());
+        }
+
     }
 
     private void addFileBrowserIcon() {
+        GVRMaterial material = new GVRMaterial(gvrContext);
+        material.setDiffuseColor(1,1,0,1);
+        Future<GVRMesh> mesh;
         try {
-            GVRSceneObject fileBrowserIcon = gvrContext.loadModel(FILEBROWSER_ASSET);
-            SelectableBehavior selectableBehavior = new SelectableBehavior(cursorManager);
-            fileBrowserIcon.attachComponent(selectableBehavior);
-            selectableBehavior.setStateChangedListener(new StateChangedListener() {
-                @Override
-                public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
-                                           ObjectState current) {
-                    if (current == ObjectState.CLICKED) {
-
-                    }
-               }
-            });
+            mesh = gvrContext.loadFutureMesh(new GVRAndroidResource(gvrContext,
+                    "box.obj"));
         } catch (IOException e) {
-            Log.e(TAG, "Could not load file browser icon:%s", e.getMessage());
+            Log.e(TAG,"Could not load folder resource");
+            return;
         }
+        GVRSceneObject fileBrowserIcon = new GVRSceneObject(gvrContext);
+        GVRRenderData renderData = new GVRRenderData(gvrContext);
+        renderData.setMesh(mesh);
+        renderData.setMaterial(material);
+        renderData.setShaderTemplate(GVRPhongShader.class);
+        fileBrowserIcon.attachRenderData(renderData);
+        fileBrowserIcon.getTransform().setPosition(0, -3, -5);
+        SelectableBehavior selectableBehavior = new SelectableBehavior(cursorManager);
+        fileBrowserIcon.attachComponent(selectableBehavior);
+        mainScene.addSceneObject(fileBrowserIcon);
+        final WindowCloseListener listener = new WindowCloseListener() {
+            @Override
+            public void onClose() {
+                cursorManager.disableSettingsCursor();
+            }
+
+            @Override
+            public void onScaleChange() {
+
+            }
+
+            @Override
+            public void onModelSelected(String modelFileName) {
+                loadModelToScene(modelFileName);
+            }
+        };
+        selectableBehavior.setStateChangedListener(new StateChangedListener() {
+            @Override
+            public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
+                                       ObjectState current) {
+                if (current == ObjectState.CLICKED) {
+                    final int cursorControllerId = cursorManager.enableSettingsCursor();
+                    gvrContext.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            FileBrowserView fileBrowserView = new FileBrowserView(gvrContext,
+                                    mainScene, cursorControllerId, listener);
+                            fileBrowserView.render();
+                        }
+                    });
+                }
+            }
+        });
     }
 
     private void addToSceneEditor(GVRSceneObject newSceneObject) {
@@ -92,6 +156,10 @@ public class SceneEditorMain extends GVRMain {
         newSceneObject.attachComponent(movableCubeBehavior);
         mainScene.addSceneObject(newSceneObject);
         movableCubeBehavior.setStateChangedListener(stateChangedListener);
+        float radius = newSceneObject.getBoundingVolume().radius;
+        float scalingFactor = TARGET_RADIUS/radius;
+        Log.d(TAG,"Radius:%f, scaling factor:%f",radius, scalingFactor);
+        newSceneObject.getTransform().setScale(scalingFactor,scalingFactor,scalingFactor);
     }
 
     @Override

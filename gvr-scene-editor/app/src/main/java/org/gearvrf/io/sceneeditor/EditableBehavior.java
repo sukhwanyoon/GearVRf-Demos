@@ -89,6 +89,11 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
         adjustArrowPosition(getOwnerObject());
     }
 
+    @Override
+    public void onModelSelected(String modelFileName) {
+
+    }
+
     public static long getComponentType() {
         return TYPE_EDITABLE;
     }

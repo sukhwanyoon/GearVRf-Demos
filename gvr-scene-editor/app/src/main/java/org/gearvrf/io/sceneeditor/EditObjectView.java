@@ -44,6 +44,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
     interface WindowCloseListener {
         void onClose();
         void onScaleChange();
+        void onModelSelected(String modelFileName);
     }
 
     //Called on main thread

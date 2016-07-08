@@ -126,7 +126,7 @@ abstract class BaseView {
         });
     }
 
-    void renderFileBrowser() {
+    void renderFileBrowserView() {
         glThreadHandler.post(new Runnable() {
             @Override
             public void run() {

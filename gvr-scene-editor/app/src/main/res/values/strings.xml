@@ -23,4 +23,7 @@
     <string name="tv_pitch">Pitch</string>
     <string name="tv_roll">Roll</string>
     <string name="tv_quat">Quat</string>
+    <string name="current_dir">Current Directory:</string>
+    <string name="file_browser_title">File Browser</string>
+    <string name="done">Done</string>
 </resources>
