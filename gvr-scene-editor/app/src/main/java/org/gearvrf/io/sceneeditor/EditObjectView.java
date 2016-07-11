@@ -25,14 +25,12 @@ import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTransform;
-import org.gearvrf.utility.Log;
-import org.joml.Quaternionf;
 
 class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChangeListener {
     private static final String TAG = EditObjectView.class.getSimpleName();
     private static final float SCALEUP_FACTOR = 1.1f;
     private static final float SCALEDOWN_FACTOR = 0.9f;
-    private WindowCloseListener windowCloseListener;
+    private EditViewChangeListener editViewChangeListener;
     private GVRSceneObject sceneObject;
     private SeekBar sbYaw,sbPitch, sbRoll;
     private int prevYaw, prevPitch, prevRoll;
@@ -41,15 +39,13 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
         SCALE_UP, SCALE_DOWN
     }
 
-    interface WindowCloseListener {
-        void onClose();
+    public interface EditViewChangeListener extends WindowChangeListener {
         void onScaleChange();
-        void onModelSelected(String modelFileName);
     }
 
     //Called on main thread
     EditObjectView(final GVRContext context, final GVRScene scene, int settingsCursorId,
-                   WindowCloseListener windowCloseListener) {
+                   EditViewChangeListener editViewChangeListener) {
         super(context, scene, settingsCursorId, R.layout.edit_object_layout);
         ((Button) findViewById(R.id.bDone)).setOnClickListener(this);
         ((Button) findViewById(R.id.bScaleUp)).setOnClickListener(this);
@@ -64,7 +60,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
         sbRoll.setOnSeekBarChangeListener(this);
 
 
-        this.windowCloseListener = windowCloseListener;
+        this.editViewChangeListener = editViewChangeListener;
     }
 
     public void setSceneObject(GVRSceneObject attachedSceneObject) {
@@ -80,15 +76,15 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
         switch (v.getId()) {
             case R.id.bDone:
                 hide();
-                windowCloseListener.onClose();
+                editViewChangeListener.onClose();
                 break;
             case R.id.bScaleUp:
                 scaleObject(ScaleDirection.SCALE_UP);
-                windowCloseListener.onScaleChange();
+                editViewChangeListener.onScaleChange();
                 break;
             case R.id.bScaleDown:
                 scaleObject(ScaleDirection.SCALE_DOWN);
-                windowCloseListener.onScaleChange();
+                editViewChangeListener.onScaleChange();
                 break;
         }
     }

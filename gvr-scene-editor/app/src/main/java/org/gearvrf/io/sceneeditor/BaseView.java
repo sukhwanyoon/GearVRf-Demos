@@ -79,6 +79,10 @@ abstract class BaseView {
         pointerCoordsArray = new PointerCoords[]{pointerCoords};
     }
 
+    interface WindowChangeListener {
+        void onClose();
+    }
+
     BaseView(GVRContext context, GVRScene scene, int settingsCursorId, int layoutID) {
         this(context, scene, settingsCursorId, layoutID, QUAD_Y, QUAD_X);
     }
@@ -132,7 +136,8 @@ abstract class BaseView {
             public void run() {
                 layoutSceneObject = new GVRViewSceneObject(gvrContext, frameLayout,
                         gvrContext.createQuad(quadWidth, quadHeight));
-                layoutSceneObject.getTransform().setPosition(0,0,-10);
+                layoutSceneObject.getTransform().setPosition(0,-4,-10);
+                layoutSceneObject.getTransform().rotateByAxis(-35,1,0,0);
                 layoutSceneObject.setSensor(new GVRBaseSensor(gvrContext));
                 layoutSceneObject.getEventReceiver().addListener(sensorEvents);
                 frameWidth = frameLayout.getWidth();

@@ -8,18 +8,18 @@ import org.gearvrf.animation.GVRAnimation;
 import org.gearvrf.animation.GVRAnimationEngine;
 import org.gearvrf.animation.GVRRepeatMode;
 import org.gearvrf.animation.GVRRotationByAxisAnimation;
-import org.gearvrf.animation.GVRRotationByAxisWithPivotAnimation;
 import org.gearvrf.io.cursor3d.CursorManager;
-import org.gearvrf.io.sceneeditor.EditObjectView.WindowCloseListener;
+import org.gearvrf.io.sceneeditor.EditObjectView.EditViewChangeListener;
 import org.gearvrf.utility.Log;
 
 import java.io.IOException;
 
-public class EditableBehavior extends GVRBehavior implements WindowCloseListener {
+public class EditableBehavior extends GVRBehavior implements EditViewChangeListener {
     public static final String TAG = EditableBehavior.class.getSimpleName();
     private static final String ARROW_MODEL = "arrow.fbx";
     private static long TYPE_EDITABLE = ((long) EditableBehavior.class.hashCode() << 32) & (System
             .currentTimeMillis() & 0xffffffff);
+    private final DetachListener detachListener;
 
     private CursorManager cursorManager;
     private GVRScene scene;
@@ -28,8 +28,13 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
     private GVRAnimationEngine animationEngine;
     private GVRAnimation rotationAnimation;
 
-    protected EditableBehavior(CursorManager cursorManager, GVRScene scene) {
+    public interface DetachListener {
+        void onDetach();
+    }
+
+    protected EditableBehavior(CursorManager cursorManager, GVRScene scene, DetachListener listener) {
         super(cursorManager.getGvrContext());
+        this.detachListener = listener;
         mType = getComponentType();
         this.scene = scene;
         this.cursorManager = cursorManager;
@@ -75,6 +80,7 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
     public void onDetach(GVRSceneObject oldOwner) {
         scene.removeSceneObject(arrow);
         animationEngine.stop(rotationAnimation);
+        detachListener.onDetach();
     }
 
 
@@ -87,11 +93,6 @@ public class EditableBehavior extends GVRBehavior implements WindowCloseListener
     @Override
     public void onScaleChange() {
         adjustArrowPosition(getOwnerObject());
-    }
-
-    @Override
-    public void onModelSelected(String modelFileName) {
-
     }
 
     public static long getComponentType() {

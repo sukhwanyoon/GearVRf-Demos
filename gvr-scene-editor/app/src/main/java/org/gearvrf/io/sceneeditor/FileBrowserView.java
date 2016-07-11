@@ -27,13 +27,10 @@ import android.widget.TextView;
 
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
-import org.gearvrf.io.sceneeditor.EditObjectView.WindowCloseListener;
-import org.gearvrf.scene_objects.GVRModelSceneObject;
 import org.gearvrf.utility.Log;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,13 +42,17 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
     private ListView listView;
     private TextView dirView;
     private ProgressBar spinner;
-    private WindowCloseListener windowCloseListener;
+    private FileViewListener fileViewListener;
+
+    public interface FileViewListener extends WindowChangeListener {
+        void onModelSelected(String modelFileName);
+    }
 
     //Called on main thread
     FileBrowserView(final GVRContext context, final GVRScene scene, int settingsCursorId,
-                    WindowCloseListener listener) {
+                    FileViewListener listener) {
         super(context, scene, settingsCursorId, R.layout.file_browser_layout);
-        this.windowCloseListener = listener;
+        this.fileViewListener = listener;
         listView = (ListView) findViewById(R.id.lvFiles);
         dirView = (TextView) findViewById(R.id.tvDirName);
         spinner = (ProgressBar) findViewById(R.id.progressBar);
@@ -61,7 +62,7 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
             @Override
             public void onClick(View v) {
                 FileBrowserView.this.hide();
-                windowCloseListener.onClose();
+                fileViewListener.onClose();
             }
         });
 
@@ -135,9 +136,9 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
             spinner.setVisibility(View.VISIBLE);
             // try to load the model
             Log.d(TAG,"Trying to load the model now");
-            windowCloseListener.onModelSelected(filename);
+            fileViewListener.onModelSelected(filename);
             hide();
-            windowCloseListener.onClose();
+            fileViewListener.onClose();
             spinner.setVisibility(View.GONE);
         }
     }
