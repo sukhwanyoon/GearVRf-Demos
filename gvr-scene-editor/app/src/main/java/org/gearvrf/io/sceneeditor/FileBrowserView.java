@@ -133,6 +133,7 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         } else if (!filename.isEmpty()) {
             // strip out /sdcard
             filename = filename.substring(8);
+            listView.setVisibility(View.INVISIBLE);
             spinner.setVisibility(View.VISIBLE);
             // try to load the model
             Log.d(TAG,"Trying to load the model now");

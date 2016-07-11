@@ -53,7 +53,6 @@ import java.util.concurrent.Future;
  */
 public class SceneEditorMain extends GVRMain {
     private static final String TAG = SceneEditorMain.class.getSimpleName();
-    private static final String FILEBROWSER_ASSET = "generic-houses-1.fbx";
     private static final float TARGET_RADIUS = 1.0f;
     private static final String FILE_BROWSER_DISPLAY_STRING = "Load model from sdcard";
     private GVRScene mainScene;
@@ -149,6 +148,7 @@ public class SceneEditorMain extends GVRMain {
         SelectableBehavior selectableBehavior = new SelectableBehavior(cursorManager);
         fileBrowserIcon.attachComponent(selectableBehavior);
         fileBrowserIcon.getTransform().setPosition(0, -3, -5);
+        fileBrowserIcon.getTransform().rotateByAxis(-25,1,0,0);
         mainScene.addSceneObject(fileBrowserIcon);
 
         fileBrowserTextView = new GVRTextViewSceneObject(gvrContext,FILE_BROWSER_DISPLAY_STRING);
