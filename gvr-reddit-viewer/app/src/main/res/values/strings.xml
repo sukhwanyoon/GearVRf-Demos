@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--/* Copyright 2015 Samsung Electronics Co., LTD
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */-->
+
+<resources>
+    <string name="app_name">Scene Editor</string>
+    <string name="scale_up_button">+++</string>
+    <string name="scale_down_button">---</string>
+    <string name="tv_scale">Scale</string>
+    <string name="tv_yaw">Yaw</string>
+    <string name="tv_pitch">Pitch</string>
+    <string name="tv_roll">Roll</string>
+    <string name="tv_quat">Quat</string>
+    <string name="current_dir">Current Directory:</string>
+    <string name="file_browser_title">File Browser</string>
+    <string name="done">Done</string>
+    <string name="loading_title">Loading ...</string>
+    <string-array name="subreddits">
+        <item>/r/AskReddit</item>
+        <item>/r/funny</item>
+        <item>/r/pics</item>
+        <item>/r/science</item>
+        <item>/r/worldnews</item>
+        <item>/r/IAmA</item>
+        <item>/r/videos</item>
+        <item>/r/movies</item>
+        <item>/r/Music</item>
+        <item>/r/aww</item>
+        <item>/r/news</item>
+        <item>/r/explainlikeimfive</item>
+        <!--<item>/r/askscience</item>-->
+        <!--<item>/r/EarthPorn</item>-->
+        <!--<item>/r/books</item>-->
+        <!--<item>/r/television</item>-->
+        <!--<item>/r/mildlyinteresting</item>-->
+        <!--<item>/r/Showerthoughts</item>-->
+    </string-array>
+</resources>
