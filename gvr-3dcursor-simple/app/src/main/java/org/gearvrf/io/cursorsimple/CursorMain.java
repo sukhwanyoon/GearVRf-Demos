@@ -20,7 +20,6 @@ import android.graphics.Color;
 
 import org.gearvrf.GVRAndroidResource;
 import org.gearvrf.GVRBitmapTexture;
-import org.gearvrf.GVRComponent;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
@@ -31,9 +30,11 @@ import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.GVRTransform;
+import org.gearvrf.io.cursor3d.Cursor;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
+import org.gearvrf.io.cursor3d.SelectableBehavior.ISelectableEvents;
 import org.gearvrf.io.cursor3d.SelectableBehavior.ObjectState;
 import org.gearvrf.io.cursor3d.SelectableBehavior.StateChangedListener;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
@@ -41,7 +42,6 @@ import org.gearvrf.scene_objects.GVRModelSceneObject;
 import org.gearvrf.utility.Log;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 /**
  * This sample can be used with a Laser Cursor as well as an Object Cursor. By default the Object
@@ -82,8 +82,10 @@ public class CursorMain extends GVRMain {
         mainScene.addSceneObject(astronaut);
 
         position[0] = -5.0f;
-        MovableBehavior movableRocketBehavior = new MovableBehavior(cursorManager, new ObjectState[]{
-                ObjectState.DEFAULT, ObjectState.BEHIND, ObjectState.COLLIDING, ObjectState.CLICKED});
+        MovableBehavior movableRocketBehavior = new MovableBehavior(cursorManager, new
+                ObjectState[]{
+                ObjectState.DEFAULT, ObjectState.BEHIND, ObjectState.COLLIDING, ObjectState
+                .CLICKED});
         rocket = rocketModel.getChildByIndex(0);
         rocket.getTransform().setPosition(position[0], position[1], position[2]);
         rocket.attachComponent(movableRocketBehavior);
@@ -93,19 +95,47 @@ public class CursorMain extends GVRMain {
         position[0] = 2.0f;
         position[1] = 2.0f;
         GVRCubeSceneObject cubeSceneObject = new GVRCubeSceneObject(gvrContext, true, gvrContext
-                .loadFutureTexture(new GVRAndroidResource(gvrContext,R.mipmap.ic_launcher)));
+                .loadFutureTexture(new GVRAndroidResource(gvrContext, R.mipmap.ic_launcher)));
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
         MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
         cubeSceneObject.attachComponent(movableCubeBehavior);
         mainScene.addSceneObject(cubeSceneObject);
 
-        movableCubeBehavior.setStateChangedListener(new StateChangedListener() {
+        movableCubeBehavior.setSelectableEventListener(new ISelectableEvents() {
             @Override
-            public void onStateChanged(ObjectState prev, ObjectState current) {
-                if(current == ObjectState.CLICKED) {
-                    GVRTransform transform = astronaut.getTransform();
-                    transform.setPositionZ(transform.getPositionZ() - 1);
-                }
+            public void onEnter(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onInside(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onExit(Cursor cursor, GVRSceneObject sceneObject) {
+
+            }
+
+            @Override
+            public void onClick(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+                GVRTransform transform = astronaut.getTransform();
+                transform.setPositionZ(transform.getPositionZ() - 1);
+            }
+
+            @Override
+            public void onClickReleased(Cursor cursor, GVRSceneObject sceneObject) {
+
+            }
+
+            @Override
+            public void onDrag(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onBehind(Cursor cursor, GVRSceneObject sceneObject) {
+
             }
         });
 
@@ -156,7 +186,7 @@ public class CursorMain extends GVRMain {
         cubeBehind.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT);
         root.addChildObject(cubeBehind);
 
-        MovableBehavior movableBehavior = new MovableBehavior(cursorManager, new ObjectState[] {
+        MovableBehavior movableBehavior = new MovableBehavior(cursorManager, new ObjectState[]{
                 ObjectState.DEFAULT, ObjectState.COLLIDING, ObjectState.CLICKED, ObjectState.BEHIND
         });
         float[] position = new float[]{-2, 2, -10};
@@ -164,13 +194,41 @@ public class CursorMain extends GVRMain {
         root.attachComponent(movableBehavior);
         mainScene.addSceneObject(root);
 
-        movableBehavior.setStateChangedListener(new StateChangedListener() {
+        movableBehavior.setSelectableEventListener(new ISelectableEvents() {
             @Override
-            public void onStateChanged(ObjectState prev, ObjectState current) {
-                if(current == ObjectState.CLICKED) {
-                    GVRTransform transform = astronaut.getTransform();
-                    transform.setPositionZ(transform.getPositionZ() + 1);
-                }
+            public void onEnter(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onInside(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onExit(Cursor cursor, GVRSceneObject sceneObject) {
+
+            }
+
+            @Override
+            public void onClick(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+                GVRTransform transform = astronaut.getTransform();
+                transform.setPositionZ(transform.getPositionZ() + 1);
+            }
+
+            @Override
+            public void onClickReleased(Cursor cursor, GVRSceneObject sceneObject) {
+
+            }
+
+            @Override
+            public void onDrag(Cursor cursor, GVRSceneObject sceneObject, float[] hitpoint) {
+
+            }
+
+            @Override
+            public void onBehind(Cursor cursor, GVRSceneObject sceneObject) {
+
             }
         });
     }
