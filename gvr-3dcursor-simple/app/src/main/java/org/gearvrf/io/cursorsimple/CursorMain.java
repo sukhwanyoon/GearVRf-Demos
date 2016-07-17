@@ -25,11 +25,14 @@ import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRPhongShader;
+import org.gearvrf.GVRPicker;
 import org.gearvrf.GVRRenderData.GVRRenderingOrder;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRSphereCollider;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.GVRTransform;
+import org.gearvrf.IPickEvents;
 import org.gearvrf.io.cursor3d.Cursor;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
@@ -57,12 +60,46 @@ public class CursorMain extends GVRMain {
     private GVRSceneObject rocket;
     private GVRSceneObject astronaut;
 
+    private static float LOOKAT_COLOR_MASK_R = 1.0f;
+    private static float LOOKAT_COLOR_MASK_G = 0.8f;
+    private static float LOOKAT_COLOR_MASK_B = 0.8f;
+    private static float PICKED_COLOR_MASK_R = 1.0f;
+    private static float PICKED_COLOR_MASK_G = 0.5f;
+    private static float PICKED_COLOR_MASK_B = 0.5f;
+    private GVRSceneObject mPickedObject = null;
+    private IPickEvents mPickHandler;
+    public class PickHandler implements IPickEvents
+    {
+        public void onEnter(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject pickInfo)
+        {
+            android.util.Log.d(TAG,"OnEnter");
+            sceneObj.getRenderData().getMaterial().setColor(LOOKAT_COLOR_MASK_R, LOOKAT_COLOR_MASK_G, LOOKAT_COLOR_MASK_B);
+            mPickedObject = sceneObj;
+        }
+        public void onExit(GVRSceneObject sceneObj)
+        {
+            android.util.Log.d(TAG,"OnExit");
+            sceneObj.getRenderData().getMaterial().setColor(1.0f, 1.0f, 1.0f);
+        }
+        public void onNoPick(GVRPicker picker)
+        {
+            mPickedObject = null;
+        }
+        public void onPick(GVRPicker picker) {
+
+        }
+        public void onInside(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject pickInfo) {
+        }
+    }
+
     @Override
     public void onInit(GVRContext gvrContext) {
         mainScene = gvrContext.getNextMainScene();
         mainScene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.BLACK);
         mainScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.BLACK);
         cursorManager = new CursorManager(gvrContext, mainScene);
+        mPickHandler = new PickHandler();
+        mainScene.getEventReceiver().addListener(mPickHandler);
         GVRModelSceneObject astronautModel, rocketModel;
 
         float[] position = new float[]{5.0f, 0.0f, -10.0f};
@@ -99,6 +136,7 @@ public class CursorMain extends GVRMain {
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
         MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
         cubeSceneObject.attachComponent(movableCubeBehavior);
+        cubeSceneObject.attachComponent(new GVRSphereCollider(gvrContext));
         mainScene.addSceneObject(cubeSceneObject);
 
         movableCubeBehavior.setSelectableEventListener(new ISelectableEvents() {

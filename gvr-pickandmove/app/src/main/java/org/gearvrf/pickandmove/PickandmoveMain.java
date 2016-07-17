@@ -21,8 +21,9 @@ import java.util.concurrent.Future;
 
 import org.gearvrf.FutureWrapper;
 import org.gearvrf.GVRAndroidResource;
-import org.gearvrf.GVRCameraRig;
 import org.gearvrf.GVRContext;
+import org.gearvrf.GVRCursorController;
+import org.gearvrf.GVRCursorController.ControllerEventListener;
 import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRMesh;
 import org.gearvrf.GVRSphereCollider;
@@ -32,32 +33,42 @@ import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.GVRTransform;
-import org.gearvrf.GVRPicker.GVRPickedObject;
 import org.gearvrf.IPickEvents;
-import org.gearvrf.pickandmove.R;
+import org.gearvrf.io.CursorControllerListener;
+import org.gearvrf.io.GVRControllerType;
+import org.gearvrf.scene_objects.GVRCubeSceneObject;
+import org.joml.Vector3f;
 
+import android.graphics.Color;
 import android.util.Log;
 import android.view.MotionEvent;
 
 public class PickandmoveMain extends GVRMain {
 
+    private static final String TAG = PickandmoveMain.class.getSimpleName();
+
     public class PickHandler implements IPickEvents
     {
         public void onEnter(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject pickInfo)
         {
+            Log.d(TAG,"OnEnter");
             sceneObj.getRenderData().getMaterial().setColor(LOOKAT_COLOR_MASK_R, LOOKAT_COLOR_MASK_G, LOOKAT_COLOR_MASK_B);
             mPickedObject = sceneObj;
         }
         public void onExit(GVRSceneObject sceneObj)
         {
+            Log.d(TAG,"OnExit");
             sceneObj.getRenderData().getMaterial().setColor(1.0f, 1.0f, 1.0f);
         }
         public void onNoPick(GVRPicker picker)
         {
         	mPickedObject = null;
         }
-        public void onPick(GVRPicker picker) { }
-        public void onInside(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject pickInfo) { }      
+        public void onPick(GVRPicker picker) {
+
+        }
+        public void onInside(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject pickInfo) {
+        }
     }
     
     private static final float CUBE_WIDTH = 200.0f;
@@ -68,23 +79,68 @@ public class PickandmoveMain extends GVRMain {
     private List<GVRSceneObject> mObjects = new ArrayList<GVRSceneObject>();
     private IPickEvents mPickHandler;
     private GVRSceneObject mPickedObject = null;
+    private GVRSceneObject cursorQuad;
+    private GVRCursorController mouseCursorController;
+    private CursorControllerListener cursorControllerListener = new CursorControllerListener() {
+        @Override
+        public void onCursorControllerAdded(GVRCursorController controller) {
+            if(controller.getControllerType() == GVRControllerType.MOUSE) {
+                mouseCursorController = controller;
+                mouseCursorController.addControllerEventListener(mouseEventListener);
+                mouseCursorController.setSceneObject(cursorQuad);
+            }
+        }
+
+        @Override
+        public void onCursorControllerRemoved(GVRCursorController controller) {
+
+        }
+    };
+    private ControllerEventListener  mouseEventListener = new ControllerEventListener() {
+        @Override
+        public void onEvent(GVRCursorController controller) {
+            //lookAt();
+        }
+
+    };
     
     @Override
     public void onInit(GVRContext gvrContext) {
         mGVRContext = gvrContext;
-
         mScene = mGVRContext.getNextMainScene();
+        mScene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.BLACK);
+        mScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.BLACK);
+
+        gvrContext.getInputManager().addCursorControllerListener(cursorControllerListener);
+        for(GVRCursorController controller: gvrContext.getInputManager().getCursorControllers()) {
+            cursorControllerListener.onCursorControllerAdded(controller);
+        }
+
+
+//        cursorQuad = new GVRSceneObject(gvrContext,
+//                new FutureWrapper<GVRMesh>(gvrContext.createQuad(0.1f, 0.1f)),
+//                gvrContext.loadFutureTexture(new GVRAndroidResource(
+//                        mGVRContext, R.drawable.headtrackingpointer)));
+        GVRMaterial material = new GVRMaterial(gvrContext);
+        material.setMainTexture(gvrContext.loadFutureTexture(new GVRAndroidResource(
+                mGVRContext, R.drawable.headtrackingpointer)));
+        cursorQuad = new GVRCubeSceneObject(gvrContext,true,material);
+        cursorQuad.getTransform().setPosition(0,0,-10);
+//        cursorQuad.attachComponent(new GVRPicker(gvrContext, mScene));
+        mScene.addSceneObject(cursorQuad);
+        mouseCursorController.setSceneObject(cursorQuad);
+        mouseCursorController.setPosition(0,0,-10);
 
         // head-tracking pointer
-        GVRSceneObject headTracker = new GVRSceneObject(gvrContext,
-                new FutureWrapper<GVRMesh>(gvrContext.createQuad(0.1f, 0.1f)),
-                gvrContext.loadFutureTexture(new GVRAndroidResource(
-                        mGVRContext, R.drawable.headtrackingpointer)));
-        headTracker.getTransform().setPosition(0.0f, 0.0f, -1.0f);
-        headTracker.getRenderData().setDepthTest(false);
-        headTracker.getRenderData().setRenderingOrder(100000);
-        mScene.getMainCameraRig().addChildObject(headTracker);
-        headTracker.attachComponent(new GVRPicker(gvrContext, mScene));
+//        GVRSceneObject headTracker = new GVRSceneObject(gvrContext,
+//                new FutureWrapper<GVRMesh>(gvrContext.createQuad(0.1f, 0.1f)),
+//                gvrContext.loadFutureTexture(new GVRAndroidResource(
+//                        mGVRContext, R.drawable.headtrackingpointer)));
+//        headTracker.getTransform().setPosition(0.0f, 0.0f, -1.0f);
+//        headTracker.getRenderData().setDepthTest(false);
+//        headTracker.getRenderData().setRenderingOrder(100000);
+//        mScene.getMainCameraRig().addChildObject(headTracker);
+//        //headTracker.attachComponent(new GVRPicker(gvrContext, mScene));
         mPickHandler = new PickHandler();
         mScene.getEventReceiver().addListener(mPickHandler);
 
@@ -160,7 +216,7 @@ public class PickandmoveMain extends GVRMain {
         GVRSceneObject sphere = new GVRSceneObject(gvrContext, sphereMesh);
         sphere.getRenderData().setMaterial(cubemapReflectionMaterial);
         sphere.setName("sphere");
-        mScene.addSceneObject(sphere);
+       // mScene.addSceneObject(sphere);
         mObjects.add(sphere);
         sphere.getTransform().setPosition(0.0f, 0.0f, -OBJECT_POSITION);
         sphere.getTransform().setScale(SCALE_FACTOR, SCALE_FACTOR, SCALE_FACTOR);
@@ -254,6 +310,42 @@ public class PickandmoveMain extends GVRMain {
         default:
             break;
         }
+    }
+
+    private Vector3f objectPosition = new Vector3f();
+    private Vector3f direction = new Vector3f();
+    protected void lookAt() {
+        GVRTransform cursorSceneObject = cursorQuad.getTransform();
+
+        objectPosition.set(cursorSceneObject.getPositionX(), cursorSceneObject.getPositionY(),
+                cursorSceneObject.getPositionZ());
+        objectPosition.negate(direction);
+
+        Vector3f up;
+        direction.normalize();
+
+        if (Math.abs(direction.x) < 0.00001
+                && Math.abs(direction.z) < 0.00001) {
+            if (direction.y > 0) {
+                up = new Vector3f(0.0f, 0.0f, -1.0f); // if direction points in +y
+            } else {
+                up = new Vector3f(0.0f, 0.0f, 1.0f); // if direction points in -y
+            }
+        } else {
+            up = new Vector3f(0.0f, 1.0f, 0.0f); // y-axis is the general up
+        }
+
+        up.normalize();
+        Vector3f right = new Vector3f();
+        up.cross(direction, right);
+        right.normalize();
+        direction.cross(right, up);
+        up.normalize();
+
+        float[] matrix = new float[]{right.x, right.y, right.z, 0.0f, up.x, up.y,
+                up.z, 0.0f, direction.x, direction.y, direction.z, 0.0f,
+                0.0f, 0.0f, 0.0f, 0.0f};
+        cursorSceneObject.setModelMatrix(matrix);
     }
 
 }
