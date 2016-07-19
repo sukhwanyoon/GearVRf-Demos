@@ -62,6 +62,7 @@ dependencies {
     compile(name:'3DCursorLibrary-debug', ext:'aar')
     compile(name:'GearWearIoDevice-debug', ext:'aar')
     compile(name:'gearwearlibrary-debug', ext:'aar')
+
     //_VENDOR_TODO_ add the device to cube-app here
     //compile project(':IODevices:io_template')
 }

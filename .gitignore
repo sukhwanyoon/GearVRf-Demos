@@ -9,11 +9,13 @@ ovr_sdk_mobile/
 .metadata/
 .recommenders/
 
+
 ////////////////////////
 // Ignored Extensions  /
 ////////////////////////
 *.prefs
 *.so
+*.aar
 
 /////////////////////////
 // Ignored Files        /
