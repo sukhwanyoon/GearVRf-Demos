@@ -57,14 +57,15 @@
             android:textColor="@android:color/black"
             />
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tvLoading"
+            style="?android:attr/textAppearanceLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:progressDrawable="@drawable/circular_progress_bar"
+            android:gravity="center"
+            android:text="@string/loading"
             />
     </RelativeLayout>
     <Button

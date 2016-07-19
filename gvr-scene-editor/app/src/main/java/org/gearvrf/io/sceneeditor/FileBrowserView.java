@@ -22,7 +22,6 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.gearvrf.GVRContext;
@@ -41,7 +40,7 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
     private String path;
     private ListView listView;
     private TextView dirView;
-    private ProgressBar spinner;
+    private TextView loadingText;
     private FileViewListener fileViewListener;
 
     public interface FileViewListener extends WindowChangeListener {
@@ -55,8 +54,9 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         this.fileViewListener = listener;
         listView = (ListView) findViewById(R.id.lvFiles);
         dirView = (TextView) findViewById(R.id.tvDirName);
-        spinner = (ProgressBar) findViewById(R.id.progressBar);
-        spinner.setVisibility(View.GONE);
+        loadingText = (TextView) findViewById(R.id.tvLoading);
+        loadingText.setVisibility(View.GONE);
+        listView.setVisibility(View.VISIBLE);
         Button bDone = (Button) findViewById(R.id.bDone);
         bDone.setOnClickListener(new OnClickListener() {
             @Override
@@ -83,10 +83,12 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         }
     }
 
+
+
     private void chdir(String filepath) {
         path = filepath;
         dirView.setText(path);
-        spinner.setVisibility(View.GONE);
+        loadingText.setVisibility(View.GONE);
 
         List values = new ArrayList();
         File dir = new File(path);
@@ -111,7 +113,6 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         ArrayAdapter adapter = new ArrayAdapter(activity, android.R.layout.simple_list_item_2,
                 android.R.id.text1, values);
         listView.setAdapter(adapter);
-
         listView.setOnItemClickListener(FileBrowserView.this);
     }
 
@@ -133,15 +134,20 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         } else if (!filename.isEmpty()) {
             // strip out /sdcard
             filename = filename.substring(8);
-            listView.setVisibility(View.INVISIBLE);
-            spinner.setVisibility(View.VISIBLE);
+            listView.setVisibility(View.GONE);
+            loadingText.setVisibility(View.VISIBLE);
             // try to load the model
             Log.d(TAG,"Trying to load the model now");
             fileViewListener.onModelSelected(filename);
-            hide();
-            fileViewListener.onClose();
-            spinner.setVisibility(View.GONE);
+
         }
+    }
+
+    public void modelLoaded() {
+        hide();
+        fileViewListener.onClose();
+        loadingText.setVisibility(View.GONE);
+        listView.setVisibility(View.VISIBLE);
     }
 
     private FilenameFilter filenameFilter = new FilenameFilter() {

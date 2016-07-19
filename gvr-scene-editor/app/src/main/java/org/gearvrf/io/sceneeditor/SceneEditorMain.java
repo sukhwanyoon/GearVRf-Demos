@@ -17,6 +17,8 @@ package org.gearvrf.io.sceneeditor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Environment;
+import android.os.storage.StorageManager;
 import android.view.Gravity;
 
 import org.gearvrf.FutureWrapper;
@@ -31,6 +33,7 @@ import org.gearvrf.GVRRenderData;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.IAssetEvents;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
@@ -63,6 +66,7 @@ public class SceneEditorMain extends GVRMain {
     private GVRContext gvrContext;
     private GVRSceneObject fileBrowserIcon;
     private GVRTextViewSceneObject fileBrowserTextView;
+    private FileBrowserView fileBrowserView;
 
     @Override
     public void onInit(GVRContext gvrContext) {
@@ -83,17 +87,66 @@ public class SceneEditorMain extends GVRMain {
         addToSceneEditor(cubeSceneObject);
         addFileBrowserIcon();
         addSurroundings(gvrContext, mainScene);
+        gvrContext.getEventReceiver().addListener(assetEventListener);
     }
+
+    private void printHelper(GVRSceneObject sceneObject) {
+        if(sceneObject == null) {
+            return;
+        }
+        Log.d(TAG,"SceneObjectName:" + sceneObject.getName());
+        for(GVRSceneObject sceneObject1:sceneObject.getChildren()) {
+            printHelper(sceneObject1);
+        }
+    }
+
+    IAssetEvents assetEventListener = new IAssetEvents() {
+        @Override
+        public void onAssetLoaded(GVRContext context, GVRSceneObject model, String filePath,
+                String errors) {
+            Log.d(TAG,"onAssetLoaded:%s",filePath);
+        }
+
+        @Override
+        public void onModelLoaded(GVRContext context, GVRSceneObject model, String filePath) {
+            Log.d(TAG,"onModelLoaded:%s",filePath);
+            printHelper(model);
+            model.getTransform().setPosition(0,0,-5);
+            addToSceneEditor(model);
+            int end = filePath.lastIndexOf(".");
+            int start = filePath.lastIndexOf(File.separator, end) + 1;
+            String name = "so_" + filePath.substring(start, end);
+            Log.d(TAG,"Setting model name to:%s",name);
+            model.setName(name);
+            fileBrowserView.modelLoaded();
+            String abspath = Environment.getExternalStoragePublicDirectory(Environment
+                    .DIRECTORY_PICTURES).getAbsolutePath() + "/test.dae";
+            Log.d(TAG,"AbsolutePath is:%s", abspath);
+            mainScene.export("/sdcard/Pictures/test.obj");
+        }
+
+        @Override
+        public void onTextureLoaded(GVRContext context, GVRTexture texture, String filePath) {
+            Log.d(TAG,"onTextureLoaded:%s",filePath);
+        }
+
+        @Override
+        public void onModelError(GVRContext context, String error, String filePath) {
+            Log.d(TAG,"onModelError:%s:%s", error, filePath);
+            fileBrowserView.modelLoaded();
+
+        }
+
+        @Override
+        public void onTextureError(GVRContext context, String error, String filePath) {
+            Log.d(TAG,"onTextureError:%s:%s",error,filePath);
+            fileBrowserView.modelLoaded();
+        }
+    };
 
     private void loadModelToScene(String modelFileName) {
         try {
-            GVRSceneObject model = gvrContext.loadModelFromSD(modelFileName);
-            model.getTransform().setPosition(0,0,-5);
-            addToSceneEditor(model);
-            int end = modelFileName.lastIndexOf(".");
-            int start = modelFileName.lastIndexOf(File.separator, end) + 1;
-            String name = "so_" + modelFileName.substring(start, end);
-            model.setName(name);
+            gvrContext.loadModelFromSD(modelFileName);
         } catch (IOException e) {
             Log.e(TAG,"Could not load model:" + modelFileName  + e.getMessage());
         }
@@ -175,7 +228,7 @@ public class SceneEditorMain extends GVRMain {
                     gvrContext.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            FileBrowserView fileBrowserView = new FileBrowserView(gvrContext,
+                            fileBrowserView = new FileBrowserView(gvrContext,
                                     mainScene, cursorControllerId, fileViewListener);
                             fileBrowserView.render();
                             fileBrowserIcon.setEnable(false);
