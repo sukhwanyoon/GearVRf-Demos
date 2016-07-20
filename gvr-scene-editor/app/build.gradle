@@ -37,6 +37,9 @@ android {
     lintOptions {
         checkReleaseBuilds false
     }
+    defaultConfig {
+        multiDexEnabled true
+    }
 }
 
 dependencies {

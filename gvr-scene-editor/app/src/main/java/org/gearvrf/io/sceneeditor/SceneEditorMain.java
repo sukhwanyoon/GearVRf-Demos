@@ -17,8 +17,6 @@ package org.gearvrf.io.sceneeditor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.Environment;
-import android.os.storage.StorageManager;
 import android.view.Gravity;
 
 import org.gearvrf.FutureWrapper;
@@ -43,12 +41,13 @@ import org.gearvrf.io.sceneeditor.EditableBehavior.DetachListener;
 import org.gearvrf.io.sceneeditor.FileBrowserView.FileViewListener;
 import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.scene_objects.GVRTextViewSceneObject;
-import org.gearvrf.scene_objects.GVRTextViewSceneObject.IntervalFrequency;
 import org.gearvrf.utility.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Future;
+
+import org.gearvrf.io.sceneeditor.sceneserializer.SceneSerializer;
 
 /**
  * This sample can be used with a Laser Cursor as well as an Object Cursor. By default the Object
@@ -67,6 +66,8 @@ public class SceneEditorMain extends GVRMain {
     private GVRSceneObject fileBrowserIcon;
     private GVRTextViewSceneObject fileBrowserTextView;
     private FileBrowserView fileBrowserView;
+    private SceneSerializer sceneSerializer;
+    int modelCounter = 0;
 
     @Override
     public void onInit(GVRContext gvrContext) {
@@ -76,6 +77,7 @@ public class SceneEditorMain extends GVRMain {
         mainScene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.DKGRAY);
         cursorManager = new CursorManager(gvrContext, mainScene);
         editableBehavior = new EditableBehavior(cursorManager, mainScene, detachListener);
+        sceneSerializer = new SceneSerializer();
 
         float[] position = new float[]{0.0f, 0.0f, -5.0f};
         GVRMaterial material = new GVRMaterial(gvrContext);
@@ -115,14 +117,11 @@ public class SceneEditorMain extends GVRMain {
             addToSceneEditor(model);
             int end = filePath.lastIndexOf(".");
             int start = filePath.lastIndexOf(File.separator, end) + 1;
-            String name = "so_" + filePath.substring(start, end);
+            String name = "so_" + filePath.substring(start, end) + modelCounter++;
             Log.d(TAG,"Setting model name to:%s",name);
             model.setName(name);
             fileBrowserView.modelLoaded();
-            String abspath = Environment.getExternalStoragePublicDirectory(Environment
-                    .DIRECTORY_PICTURES).getAbsolutePath() + "/test.dae";
-            Log.d(TAG,"AbsolutePath is:%s", abspath);
-            mainScene.export("/sdcard/Pictures/test.obj");
+            sceneSerializer.addToScene(model, filePath);
         }
 
         @Override
@@ -145,6 +144,7 @@ public class SceneEditorMain extends GVRMain {
     };
 
     private void loadModelToScene(String modelFileName) {
+        Log.d(TAG,"Loading the model to scene:%s" + modelFileName);
         try {
             gvrContext.loadModelFromSD(modelFileName);
         } catch (IOException e) {
@@ -183,15 +183,6 @@ public class SceneEditorMain extends GVRMain {
         renderData.setMaterial(material);
         renderData.setShaderTemplate(GVRPhongShader.class);
         fileBrowserIcon.attachRenderData(renderData);
-    }
-
-    private void loadFromModel() {
-        try {
-            GVRSceneObject fileBrowserIcon = gvrContext.loadModel("box.fbx");
-        } catch (IOException e) {
-            Log.e(TAG,"Could not load browser icon");
-            return;
-        }
     }
 
     private void addFileBrowserIcon() {
@@ -233,6 +224,11 @@ public class SceneEditorMain extends GVRMain {
                             fileBrowserView.render();
                             fileBrowserIcon.setEnable(false);
                             fileBrowserTextView.setEnable(false);
+                            try {
+                                sceneSerializer.exportScene();
+                            } catch (IOException e) {
+                                Log.e(TAG,"%s", e.getMessage());
+                            }
                         }
                     });
                 }
