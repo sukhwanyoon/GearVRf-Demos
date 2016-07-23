@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 include 'app'
-include ':framework'
+include ':framework', ':sceneserializer'
 include ':3DCursorLibrary'
 
 project(':framework').projectDir = new File('../../GearVRf/GVRf/Framework/framework')

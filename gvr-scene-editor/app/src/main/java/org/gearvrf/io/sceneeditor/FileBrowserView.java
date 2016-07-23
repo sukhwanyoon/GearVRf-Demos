@@ -37,19 +37,21 @@ import java.util.List;
 class FileBrowserView extends BaseView implements OnClickListener, OnItemClickListener {
     private static final String TAG = FileBrowserView.class.getSimpleName();
     private static final String DEFAULT_PATH = "/sdcard/test";
+    private final TextView tvTitle;
     private String path;
     private ListView listView;
     private TextView dirView;
     private TextView loadingText;
     private FileViewListener fileViewListener;
+    private SceneFileFilter filenameFilter;
 
     public interface FileViewListener extends WindowChangeListener {
-        void onModelSelected(String modelFileName);
+        void onFileSelected(String modelFileName);
     }
 
     //Called on main thread
     FileBrowserView(final GVRContext context, final GVRScene scene, int settingsCursorId,
-                    FileViewListener listener) {
+                    FileViewListener listener, String[] extensions, String title) {
         super(context, scene, settingsCursorId, R.layout.file_browser_layout);
         this.fileViewListener = listener;
         listView = (ListView) findViewById(R.id.lvFiles);
@@ -57,6 +59,7 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         loadingText = (TextView) findViewById(R.id.tvLoading);
         loadingText.setVisibility(View.GONE);
         listView.setVisibility(View.VISIBLE);
+        tvTitle = (TextView) findViewById(R.id.tvTitle);
         Button bDone = (Button) findViewById(R.id.bDone);
         bDone.setOnClickListener(new OnClickListener() {
             @Override
@@ -65,7 +68,12 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
                 fileViewListener.onClose();
             }
         });
-
+        tvTitle.setText(title);
+        if(extensions == null) {
+            filenameFilter = new SceneFileFilter(MODEL_EXTENSIONS);
+        } else {
+            filenameFilter = new SceneFileFilter(extensions);
+        }
         path = DEFAULT_PATH;
         chdir(path);
     }
@@ -137,8 +145,8 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
             listView.setVisibility(View.GONE);
             loadingText.setVisibility(View.VISIBLE);
             // try to load the model
-            Log.d(TAG,"Trying to load the model now");
-            fileViewListener.onModelSelected(filename);
+            Log.d(TAG,"File Selected");
+            fileViewListener.onFileSelected(filename);
 
         }
     }
@@ -150,15 +158,23 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         listView.setVisibility(View.VISIBLE);
     }
 
-    private FilenameFilter filenameFilter = new FilenameFilter() {
-        private String[] extensions = new String[]{
-                ".fbx", ".dae", ".gltf", ".glb", ".blend", ".3ds", ".ase", ".obj", ".xgl", ".dxf",
-                ".lwo", ".lws", ".lxo", ".stl", ".ac", ".ms3d", ".cob", ".mdl", ".md2", ".md3",
-                ".3d", ".ogex"
-        };
+    public static String[] MODEL_EXTENSIONS = new String[]{
+            ".fbx", ".dae", ".gltf", ".glb", ".blend", ".3ds", ".ase", ".obj", ".xgl", ".dxf",
+            ".lwo", ".lws", ".lxo", ".stl", ".ac", ".ms3d", ".cob", ".mdl", ".md2", ".md3",
+            ".3d", ".ogex"
+    };
 
+    public static String[] ENVIRONMENT_EXTENSIONS = new String[] {".png",".jpg",".jpeg", ".zip"};
+
+    private static class SceneFileFilter implements FilenameFilter {
+        private String[] extensions;
+        SceneFileFilter(String[] extensions) {
+            this.extensions = extensions;
+        }
+
+        @Override
         public boolean accept(File dir, String name) {
-            String filename = dir.getName() + File.separator + name;
+            String filename = dir.getAbsolutePath() + File.separator + name;
             if (new File(filename).isDirectory()) {
                 return true;
             }
@@ -170,5 +186,5 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
 
             return false;
         }
-    };
+    }
 }

@@ -46,6 +46,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile project(':3DCursorLibrary')
     compile project(path: ':framework')
+    compile project(path: ':sceneserializer')
 }
 
 //TODO export plugin to jar

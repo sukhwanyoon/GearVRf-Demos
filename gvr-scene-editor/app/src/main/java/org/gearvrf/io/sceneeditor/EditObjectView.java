@@ -18,8 +18,10 @@ package org.gearvrf.io.sceneeditor;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TextView;
 
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
@@ -34,6 +36,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
     private GVRSceneObject sceneObject;
     private SeekBar sbYaw,sbPitch, sbRoll;
     private int prevYaw, prevPitch, prevRoll;
+    private TextView tvSceneObjectName;
 
     enum ScaleDirection {
         SCALE_UP, SCALE_DOWN
@@ -46,10 +49,12 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
     //Called on main thread
     EditObjectView(final GVRContext context, final GVRScene scene, int settingsCursorId,
                    EditViewChangeListener editViewChangeListener) {
-        super(context, scene, settingsCursorId, R.layout.edit_object_layout);
+        super(context, scene, settingsCursorId, R.layout.edit_object_layout, 5, 7);
         ((Button) findViewById(R.id.bDone)).setOnClickListener(this);
-        ((Button) findViewById(R.id.bScaleUp)).setOnClickListener(this);
-        ((Button) findViewById(R.id.bScaleDown)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.ivScaleUp)).setOnClickListener(this);
+        ((ImageView) findViewById(R.id.ivScaleDown)).setOnClickListener(this);
+        tvSceneObjectName = (TextView) findViewById(R.id.tvSceneObjectName);
+
         sbYaw = (SeekBar) findViewById(R.id.sbYaw);
         sbYaw.setOnSeekBarChangeListener(this);
 
@@ -59,7 +64,6 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
         sbRoll = (SeekBar) findViewById(R.id.sbRoll);
         sbRoll.setOnSeekBarChangeListener(this);
 
-
         this.editViewChangeListener = editViewChangeListener;
     }
 
@@ -68,6 +72,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
     }
 
     public void render() {
+        tvSceneObjectName.setText("SceneObject Name: " + sceneObject.getName());
         super.renderEditObjectView();
     }
 
@@ -78,11 +83,11 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
                 hide();
                 editViewChangeListener.onClose();
                 break;
-            case R.id.bScaleUp:
+            case R.id.ivScaleUp:
                 scaleObject(ScaleDirection.SCALE_UP);
                 editViewChangeListener.onScaleChange();
                 break;
-            case R.id.bScaleDown:
+            case R.id.ivScaleDown:
                 scaleObject(ScaleDirection.SCALE_DOWN);
                 editViewChangeListener.onScaleChange();
                 break;

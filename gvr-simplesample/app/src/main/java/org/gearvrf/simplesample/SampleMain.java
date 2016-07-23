@@ -24,9 +24,14 @@ import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRScript;
 import org.gearvrf.GVRTexture;
+import org.gearvrf.utility.Log;
+import org.gearvrf.utlis.sceneserializer.SceneSerializer;
+
+import java.io.IOException;
 
 public class SampleMain extends GVRScript {
 
+    private static final String TAG = SampleMain.class.getSimpleName();
     private GVRContext mGVRContext;
 
     @Override
@@ -45,21 +50,12 @@ public class SampleMain extends GVRScript {
         mainCameraRig.getRightCamera()
                 .setBackgroundColor(Color.WHITE);
 
-        // load texture
-        GVRTexture texture = gvrContext.loadTexture(new GVRAndroidResource(
-                mGVRContext, R.drawable.gearvr_logo));
-
-        // create a scene object (this constructor creates a rectangular scene
-        // object that uses the standard 'unlit' shader)
-        GVRSceneObject sceneObject = new GVRSceneObject(gvrContext, 4.0f, 2.0f,
-                texture);
-
-        // set the scene object position
-        sceneObject.getTransform().setPosition(0.0f, 0.0f, -3.0f);
-
-        // add the scene object to the scene graph
-        scene.addSceneObject(sceneObject);
-
+        SceneSerializer sceneSerializer = new SceneSerializer();
+        try {
+            sceneSerializer.importScene(gvrContext,scene);
+        } catch (IOException e) {
+            Log.e(TAG,"Could not import scene:" + e.getMessage());
+        }
     }
 
     @Override
