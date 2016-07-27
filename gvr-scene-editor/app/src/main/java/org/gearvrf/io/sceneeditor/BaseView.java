@@ -18,6 +18,7 @@ package org.gearvrf.io.sceneeditor;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 import android.os.SystemClock;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -30,28 +31,24 @@ import org.gearvrf.GVRActivity;
 import org.gearvrf.GVRBaseSensor;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRScene;
-import org.gearvrf.GVRSceneObject;
 import org.gearvrf.ISensorEvents;
 import org.gearvrf.SensorEvent;
-import org.gearvrf.io.cursor3d.CustomKeyEvent;
 import org.gearvrf.scene_objects.GVRViewSceneObject;
 import org.gearvrf.scene_objects.view.GVRFrameLayout;
+import org.gearvrf.utility.Log;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.List;
 
 abstract class BaseView {
     private static final String TAG = BaseView.class.getSimpleName();
-    private static final Vector3f INITIAL_ROTATION = new Vector3f(0.0f, 0.0f, -1.0f);
     private static final float QUAD_X = 10.0f;
     private static final float QUAD_Y = 8f;
-    public static final float QUAD_DEPTH = -13f;
+    private static final int MOTION_EVENT = 1;
+    private static final int KEY_EVENT = 2;
     private GVRFrameLayout frameLayout;
 
-    private int frameWidth;
-    private int frameHeight;
     private float quadHeight;
     private float halfQuadHeight;
     private float quadWidth;
@@ -62,13 +59,11 @@ abstract class BaseView {
     private GVRViewSceneObject layoutSceneObject;
     private boolean sensorEnabled = true;
 
-    private Handler glThreadHandler;
+    private Handler mainThreadHandler;
     private final static PointerProperties[] pointerProperties;
     private final static PointerCoords[] pointerCoordsArray;
     private final static PointerCoords pointerCoords;
     int settingsCursorId;
-    private Vector3f cross;
-    private Quaternionf rotation;
 
     static {
         PointerProperties properties = new PointerProperties();
@@ -101,21 +96,37 @@ abstract class BaseView {
         frameLayout = new GVRFrameLayout(activity);
         frameLayout.setBackgroundColor(Color.TRANSPARENT);
         View.inflate(activity, layoutID, frameLayout);
-        glThreadHandler = new Handler(Looper.getMainLooper());
-        //INITIAL_ROTATION = new Vector3f(0.0f, 0.0f, -1.0f);
-        cross = new Vector3f();
-        rotation = new Quaternionf();
+        mainThreadHandler = new Handler(Looper.getMainLooper()) {
+
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case MOTION_EVENT:
+                        MotionEvent motionEvent = (MotionEvent) msg.obj;
+                        frameLayout.dispatchTouchEvent(motionEvent);
+                        frameLayout.invalidate();
+                        motionEvent.recycle();
+                        break;
+                    case KEY_EVENT:
+                        KeyEvent keyEvent = (KeyEvent) msg.obj;
+                        frameLayout.dispatchKeyEvent(keyEvent);
+                        frameLayout.invalidate();;
+                }
+            }
+        };
     }
 
     void renderEditObjectView() {
-        glThreadHandler.post(new Runnable() {
+        scrollEnabled = false;
+        mainThreadHandler.post(new Runnable() {
             @Override
             public void run() {
                 layoutSceneObject = new GVRViewSceneObject(gvrContext, frameLayout,
                         gvrContext.createQuad(quadWidth, quadHeight));
-                layoutSceneObject.getTransform().setPosition(0,0,-10);
-                layoutSceneObject.getTransform().rotateByAxisWithPivot(-35,1,0,0,0,0,0);
-                Matrix4f cameraMatrix = gvrContext.getMainScene().getMainCameraRig().getHeadTransform()
+                layoutSceneObject.getTransform().setPosition(0, 0, -10);
+                layoutSceneObject.getTransform().rotateByAxisWithPivot(-35, 1, 0, 0, 0, 0, 0);
+                Matrix4f cameraMatrix = gvrContext.getMainScene().getMainCameraRig()
+                        .getHeadTransform()
                         .getModelMatrix4f();
                 Matrix4f objectMatrix = layoutSceneObject.getTransform().getModelMatrix4f();
                 Matrix4f finalMatrix = cameraMatrix.mul(objectMatrix);
@@ -123,32 +134,33 @@ abstract class BaseView {
 
                 layoutSceneObject.setSensor(new GVRBaseSensor(gvrContext));
                 layoutSceneObject.getEventReceiver().addListener(sensorEvents);
-                frameWidth = frameLayout.getWidth();
-                frameHeight = frameLayout.getHeight();
                 show();
             }
         });
     }
 
     void renderFileBrowserView() {
-        glThreadHandler.post(new Runnable() {
+        scrollEnabled = true;
+        mainThreadHandler.post(new Runnable() {
             @Override
             public void run() {
                 layoutSceneObject = new GVRViewSceneObject(gvrContext, frameLayout,
                         gvrContext.createQuad(quadWidth, quadHeight));
-                layoutSceneObject.getTransform().setPosition(0,-4,-10);
-                layoutSceneObject.getTransform().rotateByAxis(-35,1,0,0);
+                layoutSceneObject.getTransform().setPosition(0, -4, -10);
+                layoutSceneObject.getTransform().rotateByAxis(-35, 1, 0, 0);
                 layoutSceneObject.setSensor(new GVRBaseSensor(gvrContext));
                 layoutSceneObject.getEventReceiver().addListener(sensorEvents);
-                frameWidth = frameLayout.getWidth();
-                frameHeight = frameLayout.getHeight();
                 show();
             }
         });
     }
 
-
+    private boolean scrollEnabled;
     private ISensorEvents sensorEvents = new ISensorEvents() {
+        private static final float SCALE = 5.0f;
+        private float savedMotionEventX, savedMotionEventY, savedHitPointX,
+                savedHitPointY;
+
         @Override
         public void onSensorEvent(final SensorEvent event) {
             int id = event.getCursorController().getId();
@@ -156,58 +168,73 @@ abstract class BaseView {
             if (id != settingsCursorId || !sensorEnabled) {
                 return;
             }
-            List<KeyEvent> keyEvents = event.getCursorController()
-                    .getKeyEvents();
+            List<KeyEvent> keyEvents = event.getCursorController().getKeyEvents();
+            List<MotionEvent> motionEvents = event.getCursorController().getMotionEvents();
 
-            if (keyEvents.isEmpty() == false) {
-                for (KeyEvent keyEvent : keyEvents) {
-                    if (keyEvent.getAction() == CustomKeyEvent.ACTION_SWIPE) {
-                        sendSwipeEvent(keyEvent);
-                        continue;
+            if(scrollEnabled) {
+                for (MotionEvent motionEvent : motionEvents) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
+                        pointerCoords.x = savedHitPointX
+                                + ((motionEvent.getX() - savedMotionEventX) * SCALE);
+                        pointerCoords.y = savedHitPointY
+                                + ((motionEvent.getY() - savedMotionEventY) * SCALE);
+                    } else {
+                        float[] hitPoint = event.getHitPoint();
+                        pointerCoords.x = ((hitPoint[0] + halfQuadWidth) / quadWidth) * frameLayout
+                                .getWidth();
+                        pointerCoords.y = (-(hitPoint[1] - halfQuadHeight) / quadHeight) * frameLayout
+
+                                .getHeight();
+
+                        if (motionEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                            // save the co ordinates on down
+                            savedMotionEventX = motionEvent.getX();
+                            savedMotionEventY = motionEvent.getY();
+
+                            savedHitPointX = pointerCoords.x;
+                            savedHitPointY = pointerCoords.y;
+                        }
                     }
-                    sendMotionEvent(event.getHitPoint(), keyEvent.getAction());
+
+                    final MotionEvent clone = MotionEvent.obtain(
+                            motionEvent.getDownTime(), motionEvent.getEventTime(),
+                            motionEvent.getAction(), 1, pointerProperties,
+                            pointerCoordsArray, 0, 0, 1f, 1f, 0, 0,
+                            InputDevice.SOURCE_TOUCHSCREEN, 0);
+
+                    Message message = Message.obtain(mainThreadHandler, MOTION_EVENT, 0, 0, clone);
+                    message.sendToTarget();
                 }
             } else {
-                sendMotionEvent(event.getHitPoint(), MotionEvent.ACTION_MOVE);
+                for (KeyEvent keyEvent : keyEvents) {
+                    sendMotionEventFromHitPoint(event.getHitPoint(), keyEvent.getAction());
+                }
+                if (keyEvents.isEmpty()) {
+                    sendMotionEventFromHitPoint(event.getHitPoint(), MotionEvent.ACTION_MOVE);
+                }
             }
         }
     };
 
-    private void sendSwipeEvent(final KeyEvent keyEvent) {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                KeyEvent clone = new KeyEvent(keyEvent);
-                onSwipeEvent(clone);
-            }
-        });
-    }
-
-    private void sendMotionEvent(float[] hitPoint, final int action) {
+    private void sendMotionEventFromHitPoint(float[] hitPoint, final int action) {
         float x = (hitPoint[0] + halfQuadWidth) / quadWidth;
         float y = -(hitPoint[1] - halfQuadHeight) / quadHeight;
         pointerCoords.x = x * getFrameWidth();
         pointerCoords.y = y * getFrameHeight();
-
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                long now = SystemClock.uptimeMillis();
-                final MotionEvent clone = MotionEvent.obtain(now, now + 1, action, 1,
-                        pointerProperties, pointerCoordsArray, 0, 0, 1f, 1f, 0, 0,
-                        InputDevice.SOURCE_TOUCHSCREEN, 0);
-
-                dispatchMotionEvent(clone);
-            }
-        });
+        long now = SystemClock.uptimeMillis();
+        final MotionEvent clone = MotionEvent.obtain(now, now + 1, action, 1,
+                pointerProperties, pointerCoordsArray, 0, 0, 1f, 1f, 0, 0,
+                InputDevice.SOURCE_TOUCHSCREEN, 0);
+        Message msg = Message.obtain(mainThreadHandler, MOTION_EVENT, clone);
+        msg.sendToTarget();
     }
 
     int getFrameWidth() {
-        return frameWidth;
+        return frameLayout.getWidth();
     }
 
     int getFrameHeight() {
-        return frameHeight;
+        return frameLayout.getHeight();
     }
 
     void show() {
@@ -219,63 +246,7 @@ abstract class BaseView {
         layoutSceneObject.getEventReceiver().removeListener(sensorEvents);
     }
 
-    void disable() {
-        scene.removeSceneObject(layoutSceneObject);
-        layoutSceneObject.getEventReceiver().removeListener(sensorEvents);
-    }
-
-    void enable() {
-        scene.addSceneObject(layoutSceneObject);
-        layoutSceneObject.getEventReceiver().addListener(sensorEvents);
-    }
-
     View findViewById(int id) {
         return frameLayout.findViewById(id);
-    }
-
-    void dispatchMotionEvent(MotionEvent motionEvent) {
-        frameLayout.dispatchTouchEvent(motionEvent);
-        frameLayout.invalidate();
-        motionEvent.recycle();
-    }
-
-    void onSwipeEvent(KeyEvent keyEvent) {
-    }
-
-    void setSettingsCursorId(int settingsCursorId) {
-        this.settingsCursorId = settingsCursorId;
-    }
-
-    void setSensorEnabled(boolean enabled) {
-        sensorEnabled = enabled;
-    }
-
-    boolean isSensorEnabled() {
-        return sensorEnabled;
-    }
-
-    GVRSceneObject getSceneObject() {
-        return layoutSceneObject;
-    }
-
-    private void computeRotation(Vector3f start, Vector3f end) {
-        float norm_u_norm_v = (float) Math.sqrt(start.dot(start) * end.dot(end));
-        float real_part = norm_u_norm_v + start.dot(end);
-
-        if (real_part < 1.e-6f * norm_u_norm_v) {
-        /* If u and v are exactly opposite, rotate 180 degrees
-         * around an arbitrary orthogonal axis. Axis normalisation
-         * can happen later, when we normalise the quaternion. */
-            real_part = 0.0f;
-            if (Math.abs(start.x) > Math.abs(start.z)) {
-                cross = new Vector3f(-start.y, start.x, 0.f);
-            } else {
-                cross = new Vector3f(0.f, -start.z, start.y);
-            }
-        } else {
-                /* Otherwise, build quaternion the standard way. */
-            start.cross(end, cross);
-        }
-        rotation.set(cross.x, cross.y, cross.z, real_part).normalize();
     }
 }

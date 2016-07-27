@@ -29,6 +29,8 @@ import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.IAssetEvents;
+import org.gearvrf.io.cursor3d.Cursor;
+import org.gearvrf.io.cursor3d.CursorEvent;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
@@ -215,9 +217,9 @@ public class SceneEditorMain extends GVRMain {
         fileBrowserBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
             public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
-                                       ObjectState current) {
+                                       ObjectState current, Cursor cursor) {
                 if (current == ObjectState.CLICKED) {
-                    final int cursorControllerId = cursorManager.enableSettingsCursor();
+                    final int cursorControllerId = cursorManager.enableSettingsCursor(cursor);
                     gvrContext.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -268,7 +270,7 @@ public class SceneEditorMain extends GVRMain {
         saveSceneBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
             public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
-                                       ObjectState current) {
+                                       ObjectState current, Cursor cursor) {
                 if (current == ObjectState.CLICKED) {
                     try {
                         sceneSerializer.exportScene();
@@ -310,9 +312,9 @@ public class SceneEditorMain extends GVRMain {
         fileBrowserBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
             public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
-                                       ObjectState current) {
+                                       ObjectState current, Cursor cursor) {
                 if (current == ObjectState.CLICKED) {
-                    final int cursorControllerId = cursorManager.enableSettingsCursor();
+                    final int cursorControllerId = cursorManager.enableSettingsCursor(cursor);
                     gvrContext.getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -372,12 +374,12 @@ public class SceneEditorMain extends GVRMain {
     private StateChangedListener stateChangedListener = new StateChangedListener() {
         @Override
         public void onStateChanged(final SelectableBehavior behavior, ObjectState prev,
-                                   ObjectState
-                                           current) {
+                                   ObjectState current, Cursor cursor) {
             if (prev == ObjectState.CLICKED) {
                 if (behavior.getOwnerObject().getComponent(EditableBehavior
                         .getComponentType()) == null) {
                     Log.d(TAG, "Attaching Editable Behavior");
+                    editableBehavior.setCursor(cursor);
                     behavior.getOwnerObject().attachComponent(editableBehavior);
                     setMenuVisibility(false);
                 }

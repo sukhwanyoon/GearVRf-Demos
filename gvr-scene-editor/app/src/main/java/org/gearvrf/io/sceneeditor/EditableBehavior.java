@@ -8,6 +8,7 @@ import org.gearvrf.animation.GVRAnimation;
 import org.gearvrf.animation.GVRAnimationEngine;
 import org.gearvrf.animation.GVRRepeatMode;
 import org.gearvrf.animation.GVRRotationByAxisAnimation;
+import org.gearvrf.io.cursor3d.Cursor;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.sceneeditor.EditObjectView.EditViewChangeListener;
 import org.gearvrf.utility.Log;
@@ -27,6 +28,7 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
     private GVRSceneObject arrow;
     private GVRAnimationEngine animationEngine;
     private GVRAnimation rotationAnimation;
+    private Cursor cursor;
 
     public interface DetachListener {
         void onDetach();
@@ -51,7 +53,7 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
 
     @Override
     public void onAttach(final GVRSceneObject newOwner) {
-        final int cursorControllerId = cursorManager.enableSettingsCursor();
+        final int cursorControllerId = cursorManager.enableSettingsCursor(cursor);
         getGVRContext().getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -98,4 +100,9 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
     public static long getComponentType() {
         return TYPE_EDITABLE;
     }
+
+    public void setCursor(Cursor cursor) {
+        this.cursor = cursor;
+    }
+
 }
