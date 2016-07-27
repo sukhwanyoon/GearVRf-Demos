@@ -372,17 +372,25 @@ public class SceneEditorMain extends GVRMain {
     };
 
     private StateChangedListener stateChangedListener = new StateChangedListener() {
+        public static final long CLICK_THRESHOLD = 500;
+        public long prevClickTimeStamp = 0;
+
         @Override
         public void onStateChanged(final SelectableBehavior behavior, ObjectState prev,
                                    ObjectState current, Cursor cursor) {
             if (prev == ObjectState.CLICKED) {
-                if (behavior.getOwnerObject().getComponent(EditableBehavior
-                        .getComponentType()) == null) {
-                    Log.d(TAG, "Attaching Editable Behavior");
-                    editableBehavior.setCursor(cursor);
-                    behavior.getOwnerObject().attachComponent(editableBehavior);
-                    setMenuVisibility(false);
+                long currentTimeStamp = System.currentTimeMillis();
+                if(prevClickTimeStamp != 0 && (currentTimeStamp - prevClickTimeStamp) < CLICK_THRESHOLD) {
+                    Log.d(TAG,"Double Click !!!!");
+                    if (behavior.getOwnerObject().getComponent(EditableBehavior.getComponentType()) == null) {
+                        Log.d(TAG, "Attaching Editable Behavior");
+                        editableBehavior.setCursor(cursor);
+                        behavior.getOwnerObject().attachComponent(editableBehavior);
+                        setMenuVisibility(false);
+
+                    }
                 }
+                prevClickTimeStamp = System.currentTimeMillis();
             }
         }
     };

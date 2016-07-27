@@ -53,6 +53,7 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
 
     @Override
     public void onAttach(final GVRSceneObject newOwner) {
+        Log.d(TAG,"Cursor is null:%b",cursor == null);
         final int cursorControllerId = cursorManager.enableSettingsCursor(cursor);
         getGVRContext().getActivity().runOnUiThread(new Runnable() {
             @Override
