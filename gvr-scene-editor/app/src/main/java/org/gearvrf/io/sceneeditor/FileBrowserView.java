@@ -36,7 +36,7 @@ import java.util.List;
 
 class FileBrowserView extends BaseView implements OnClickListener, OnItemClickListener {
     private static final String TAG = FileBrowserView.class.getSimpleName();
-    private static final String DEFAULT_PATH = "/sdcard/test";
+    private static final String DEFAULT_PATH = "/sdcard/SceneEditor";
     private final TextView tvTitle;
     private String path;
     private ListView listView;
@@ -75,6 +75,7 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
             filenameFilter = new SceneFileFilter(extensions);
         }
         path = DEFAULT_PATH;
+
         chdir(path);
     }
 

@@ -25,6 +25,7 @@ import org.gearvrf.GVRBitmapTexture;
 import org.gearvrf.GVRContext;
 import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
+import org.gearvrf.GVRRenderData.GVRRenderingOrder;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRSpotLight;
@@ -215,24 +216,24 @@ public class SceneEditorMain extends GVRMain {
     private void addLoadEnvironIcon() {
         GVRMaterial material = new GVRMaterial(gvrContext);
         material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext, R
-                .drawable.folder_icon)));
+                .drawable.environment_icon)));
         loadEnvironIcon = new GVRSceneObject(gvrContext, 1, 1);
         loadEnvironIcon.getRenderData().setMaterial(material);
 
         SelectableBehavior fileBrowserBehavior = new SelectableBehavior(cursorManager);
         loadEnvironIcon.attachComponent(fileBrowserBehavior);
-        loadEnvironIcon.getTransform().setPosition(2.5f, -3, -5);
+        loadEnvironIcon.getTransform().setPosition(1f, -3, -5);
         loadEnvironIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-        loadEnvironIcon.getTransform().rotateByAxis(-25, 0, 1, 0);
+//        loadEnvironIcon.getTransform().rotateByAxis(-25, 0, 1, 0);
 
         mainScene.addSceneObject(loadEnvironIcon);
 
-        loadEnvironTextView = new GVRTextViewSceneObject(gvrContext,
+        loadEnvironTextView = new GVRTextViewSceneObject(gvrContext, 2.5f, 1.0f,
                 LOAD_ENVIRONMENT_DISPLAY_STRING);
         loadEnvironTextView.setTextColor(Color.WHITE);
         loadEnvironTextView.setBackgroundColor(R.drawable.rounded_rect_bg);
         loadEnvironTextView.setGravity(Gravity.CENTER);
-
+        loadEnvironTextView.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT);
         loadEnvironTextView.getTransform().setPosition(0f, -TEXT_VIEW_OFFSET, 0);
         loadEnvironTextView.getTransform().rotateByAxis(-45, 1, 0, 0);
         loadEnvironIcon.addChildObject(loadEnvironTextView);
@@ -271,7 +272,7 @@ public class SceneEditorMain extends GVRMain {
         saveSceneIcon.getTransform().setPosition(0, -2.5f, -5);
         saveSceneIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
 
-        mainScene.addSceneObject(saveSceneIcon);
+        //mainScene.addSceneObject(saveSceneIcon);
 
         saveSceneTextView = new GVRTextViewSceneObject(gvrContext, SCENE_SAVE_DISPLAY_STRING);
         saveSceneTextView.setTextColor(Color.WHITE);
@@ -282,8 +283,6 @@ public class SceneEditorMain extends GVRMain {
         saveSceneTextView.getTransform().rotateByAxis(-45, 1, 0, 0);
         saveSceneIcon.addChildObject(saveSceneTextView);
         saveSceneTextView.setTextSize(6);
-
-        mainScene.addSceneObject(saveSceneIcon);
 
         saveSceneBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
@@ -299,15 +298,15 @@ public class SceneEditorMain extends GVRMain {
     private void addLoadModelIcon() {
         GVRMaterial material = new GVRMaterial(gvrContext);
         material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext, R
-                .drawable.folder_icon)));
+                .drawable.model_3d_icon)));
         loadModelIcon = new GVRSceneObject(gvrContext, 1, 1);
         loadModelIcon.getRenderData().setMaterial(material);
 
         SelectableBehavior fileBrowserBehavior = new SelectableBehavior(cursorManager);
         loadModelIcon.attachComponent(fileBrowserBehavior);
-        loadModelIcon.getTransform().setPosition(-2.5f, -3, -5);
+        loadModelIcon.getTransform().setPosition(-1f, -3, -5);
         loadModelIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-        loadModelIcon.getTransform().rotateByAxis(25, 0, 1, 0);
+//        loadModelIcon.getTransform().rotateByAxis(25, 0, 1, 0);
 
         mainScene.addSceneObject(loadModelIcon);
 
@@ -315,13 +314,11 @@ public class SceneEditorMain extends GVRMain {
         loadModelTextView.setTextColor(Color.WHITE);
         loadModelTextView.setBackgroundColor(R.drawable.rounded_rect_bg);
         loadModelTextView.setGravity(Gravity.CENTER);
-
+        loadModelTextView.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT);
         loadModelTextView.getTransform().setPosition(0, -TEXT_VIEW_OFFSET, 0);
         loadModelTextView.getTransform().rotateByAxis(-45, 1, 0, 0);
         loadModelIcon.addChildObject(loadModelTextView);
         loadModelTextView.setTextSize(6);
-
-        mainScene.addSceneObject(loadModelIcon);
 
         fileBrowserBehavior.setStateChangedListener(new StateChangedListener() {
             @Override
