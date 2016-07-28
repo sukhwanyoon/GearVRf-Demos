@@ -27,10 +27,10 @@ import org.gearvrf.GVRMain;
 import org.gearvrf.GVRMaterial;
 import org.gearvrf.GVRScene;
 import org.gearvrf.GVRSceneObject;
+import org.gearvrf.GVRSpotLight;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.IAssetEvents;
 import org.gearvrf.io.cursor3d.Cursor;
-import org.gearvrf.io.cursor3d.CursorEvent;
 import org.gearvrf.io.cursor3d.CursorManager;
 import org.gearvrf.io.cursor3d.MovableBehavior;
 import org.gearvrf.io.cursor3d.SelectableBehavior;
@@ -43,9 +43,10 @@ import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.scene_objects.GVRTextViewSceneObject;
 import org.gearvrf.utility.Log;
 import org.gearvrf.utlis.sceneserializer.SceneSerializer;
+import org.gearvrf.utlis.sceneserializer.SceneSerializer.SceneLoaderListener;
+import org.joml.Quaternionf;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
@@ -69,20 +70,20 @@ public class SceneEditorMain extends GVRMain {
     private CursorManager cursorManager;
     private EditableBehavior editableBehavior;
     private GVRContext gvrContext;
-    
+
     private GVRSceneObject loadModelIcon;
     private GVRTextViewSceneObject loadModelTextView;
     private GVRSceneObject saveSceneIcon;
     private GVRTextViewSceneObject saveSceneTextView;
     private GVRSceneObject loadEnvironIcon;
     private GVRTextViewSceneObject loadEnvironTextView;
-    
+
     private FileBrowserView fileBrowserView;
     private SceneSerializer sceneSerializer;
-    private int modelCounter = 0;
     private GVRCubeSceneObject environmentCube;
     private GVRSphereSceneObject environmentSphere;
     private GVRSceneObject environmentSceneObject;
+    private String currentModel;
 
     @Override
     public void onInit(GVRContext gvrContext) {
@@ -103,9 +104,29 @@ public class SceneEditorMain extends GVRMain {
         cubeSceneObject.getTransform().setPosition(position[0], position[1], position[2]);
         addToSceneEditor(cubeSceneObject);
         addSceneEditorMenu();
-        addDefaultSurroundings(gvrContext);
         gvrContext.getEventReceiver().addListener(assetEventListener);
+        try {
+            sceneSerializer.importScene(gvrContext, mainScene, sceneLoaderListener);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not import scene, no such file:%s", e.getMessage());
+        }
     }
+
+    private SceneLoaderListener sceneLoaderListener = new SceneLoaderListener() {
+        @Override
+        public void onEnvironmentLoaded(GVRSceneObject envSceneObject) {
+            if (envSceneObject == null) {
+                addDefaultSurroundings(gvrContext);
+            } else {
+                environmentSceneObject = envSceneObject;
+            }
+        }
+
+        @Override
+        public void onSceneObjectLoaded(GVRSceneObject sceneObject) {
+            attachMovableBehavior(sceneObject);
+        }
+    };
 
     IAssetEvents assetEventListener = new IAssetEvents() {
         @Override
@@ -117,15 +138,12 @@ public class SceneEditorMain extends GVRMain {
         @Override
         public void onModelLoaded(GVRContext context, GVRSceneObject model, String filePath) {
             Log.d(TAG, "onModelLoaded:%s", filePath);
-            model.getTransform().setPosition(0, 0, -5);
-            addToSceneEditor(model);
-            int end = filePath.lastIndexOf(".");
-            int start = filePath.lastIndexOf(File.separator, end) + 1;
-            String name = "so_" + filePath.substring(start, end) + modelCounter++;
-            Log.d(TAG, "Setting model name to:%s", name);
-            model.setName(name);
-            fileBrowserView.modelLoaded();
-            sceneSerializer.addToScene(model, filePath);
+            if (filePath != null && filePath.equals(currentModel)) {
+                model.getTransform().setPosition(0, 0, -5);
+                addToSceneEditor(model);
+                fileBrowserView.modelLoaded();
+                sceneSerializer.addToSceneData(model, filePath);
+            }
         }
 
         @Override
@@ -136,19 +154,24 @@ public class SceneEditorMain extends GVRMain {
         @Override
         public void onModelError(GVRContext context, String error, String filePath) {
             Log.d(TAG, "onModelError:%s:%s", error, filePath);
-            fileBrowserView.modelLoaded();
+            if (filePath != null && filePath.equals(currentModel)) {
+                fileBrowserView.modelLoaded();
+            }
         }
 
         @Override
         public void onTextureError(GVRContext context, String error, String filePath) {
             Log.d(TAG, "onTextureError:%s:%s", error, filePath);
-            fileBrowserView.modelLoaded();
+            if (filePath != null && filePath.equals(currentModel)) {
+                fileBrowserView.modelLoaded();
+            }
         }
     };
 
     private void loadModelToScene(String modelFileName) {
         Log.d(TAG, "Loading the model to scene:%s" + modelFileName);
         try {
+            currentModel = modelFileName;
             gvrContext.loadModelFromSD(modelFileName);
         } catch (IOException e) {
             Log.e(TAG, "Could not load model:" + modelFileName + e.getMessage());
@@ -182,7 +205,7 @@ public class SceneEditorMain extends GVRMain {
             addSurroundings(fileName);
         }
     };
-    
+
     private void addSceneEditorMenu() {
         addLoadModelIcon();
         addSaveSceneIcon();
@@ -200,11 +223,12 @@ public class SceneEditorMain extends GVRMain {
         loadEnvironIcon.attachComponent(fileBrowserBehavior);
         loadEnvironIcon.getTransform().setPosition(2.5f, -3, -5);
         loadEnvironIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-        loadEnvironIcon.getTransform().rotateByAxis(-25,0,1,0);
+        loadEnvironIcon.getTransform().rotateByAxis(-25, 0, 1, 0);
 
         mainScene.addSceneObject(loadEnvironIcon);
 
-        loadEnvironTextView = new GVRTextViewSceneObject(gvrContext, LOAD_ENVIRONMENT_DISPLAY_STRING);
+        loadEnvironTextView = new GVRTextViewSceneObject(gvrContext,
+                LOAD_ENVIRONMENT_DISPLAY_STRING);
         loadEnvironTextView.setTextColor(Color.WHITE);
         loadEnvironTextView.setBackgroundColor(R.drawable.rounded_rect_bg);
         loadEnvironTextView.setGravity(Gravity.CENTER);
@@ -228,17 +252,11 @@ public class SceneEditorMain extends GVRMain {
                                     FileBrowserView.ENVIRONMENT_EXTENSIONS, ENVIRON_PICKER_TITLE);
                             fileBrowserView.render();
                             setMenuVisibility(false);
-                            try {
-                                sceneSerializer.exportScene();
-                            } catch (IOException e) {
-                                Log.e(TAG, "%s", e.getMessage());
-                            }
                         }
                     });
                 }
             }
         });
-        
     }
 
     private void addSaveSceneIcon() {
@@ -272,11 +290,7 @@ public class SceneEditorMain extends GVRMain {
             public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
                                        ObjectState current, Cursor cursor) {
                 if (current == ObjectState.CLICKED) {
-                    try {
-                        sceneSerializer.exportScene();
-                    } catch (IOException e) {
-                        Log.e(TAG, "%s", e.getMessage());
-                    }
+                    Log.d(TAG, "Reset scene now");
                 }
             }
         });
@@ -293,7 +307,7 @@ public class SceneEditorMain extends GVRMain {
         loadModelIcon.attachComponent(fileBrowserBehavior);
         loadModelIcon.getTransform().setPosition(-2.5f, -3, -5);
         loadModelIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-        loadModelIcon.getTransform().rotateByAxis(25,0,1,0);
+        loadModelIcon.getTransform().rotateByAxis(25, 0, 1, 0);
 
         mainScene.addSceneObject(loadModelIcon);
 
@@ -320,7 +334,7 @@ public class SceneEditorMain extends GVRMain {
                         public void run() {
                             fileBrowserView = new FileBrowserView(gvrContext,
                                     mainScene, cursorControllerId, modelFileViewListener,
-                                    FileBrowserView.MODEL_EXTENSIONS,MODEL_PICKER_TITLE);
+                                    FileBrowserView.MODEL_EXTENSIONS, MODEL_PICKER_TITLE);
                             fileBrowserView.render();
                             setMenuVisibility(false);
                             try {
@@ -344,11 +358,15 @@ public class SceneEditorMain extends GVRMain {
         loadEnvironTextView.setEnable(visibility);
     }
 
-    private void addToSceneEditor(GVRSceneObject newSceneObject) {
+    private void attachMovableBehavior(GVRSceneObject gvrSceneObject) {
         MovableBehavior movableCubeBehavior = new MovableBehavior(cursorManager);
-        newSceneObject.attachComponent(movableCubeBehavior);
-        mainScene.addSceneObject(newSceneObject);
+        gvrSceneObject.attachComponent(movableCubeBehavior);
         movableCubeBehavior.setStateChangedListener(stateChangedListener);
+    }
+
+    private void addToSceneEditor(GVRSceneObject newSceneObject) {
+        attachMovableBehavior(newSceneObject);
+        mainScene.addSceneObject(newSceneObject);
         float radius = newSceneObject.getBoundingVolume().radius;
         float scalingFactor = TARGET_RADIUS / radius;
         newSceneObject.getTransform().setScale(scalingFactor, scalingFactor, scalingFactor);
@@ -369,6 +387,12 @@ public class SceneEditorMain extends GVRMain {
         public void onDetach() {
             setMenuVisibility(true);
         }
+
+        @Override
+        public void onRemoveFromScene(GVRSceneObject gvrSceneObject) {
+            sceneSerializer.removeFromSceneData(gvrSceneObject);
+            mainScene.removeSceneObject(gvrSceneObject);
+        }
     };
 
     private StateChangedListener stateChangedListener = new StateChangedListener() {
@@ -380,14 +404,15 @@ public class SceneEditorMain extends GVRMain {
                                    ObjectState current, Cursor cursor) {
             if (prev == ObjectState.CLICKED) {
                 long currentTimeStamp = System.currentTimeMillis();
-                if(prevClickTimeStamp != 0 && (currentTimeStamp - prevClickTimeStamp) < CLICK_THRESHOLD) {
-                    Log.d(TAG,"Double Click !!!!");
-                    if (behavior.getOwnerObject().getComponent(EditableBehavior.getComponentType()) == null) {
+                if (prevClickTimeStamp != 0 && (currentTimeStamp - prevClickTimeStamp) <
+                        CLICK_THRESHOLD) {
+                    Log.d(TAG, "Double Click !!!!");
+                    if (behavior.getOwnerObject().getComponent(EditableBehavior.getComponentType
+                            ()) == null) {
                         Log.d(TAG, "Attaching Editable Behavior");
                         editableBehavior.setCursor(cursor);
                         behavior.getOwnerObject().attachComponent(editableBehavior);
                         setMenuVisibility(false);
-
                     }
                 }
                 prevClickTimeStamp = System.currentTimeMillis();
@@ -403,7 +428,7 @@ public class SceneEditorMain extends GVRMain {
         // return the correct splash screen bitmap
         return new GVRBitmapTexture(gvrContext, bitmap);
     }
-    
+
     private void addSurroundings(String fileName) {
         GVRAndroidResource resource = null;
         String fullPath = Environment.getExternalStorageDirectory().getAbsolutePath()
@@ -411,62 +436,68 @@ public class SceneEditorMain extends GVRMain {
         try {
             resource = new GVRAndroidResource(fullPath);
         } catch (IOException e) {
-            Log.e(TAG,"Could not load texture file:%s",e.getMessage());
+            Log.e(TAG, "Could not load texture file:%s", e.getMessage());
             fileBrowserView.modelLoaded();
             return;
         }
 
-        if(fileName.endsWith(CUBEMAP_EXTENSION)) {
-            //if(environmentCube == null) {
-                initializeSurroundingCube();
-            //}
+        if (fileName.endsWith(CUBEMAP_EXTENSION)) {
+            //TODO find the reason for the crash on just replacing the texture.
+            initializeSurroundingCube();
             Future<GVRTexture> futureCubeTexture = gvrContext.loadFutureCubemapTexture
-                        (resource);
+                    (resource);
             environmentCube.getRenderData().getMaterial().setMainTexture(futureCubeTexture);
-            if(environmentSceneObject != environmentCube) {
+            if (environmentSceneObject != environmentCube) {
                 mainScene.removeSceneObject(environmentSceneObject);
                 environmentSceneObject = environmentCube;
-                mainScene.addSceneObject(environmentCube);
+                mainScene.addSceneObject(environmentSceneObject);
             }
         } else {
-            if(environmentSphere == null) {
-                initializeSurroundSphere();
-            }
+            //TODO find the reason for the crash on just replacing the texture.
+            initializeSurroundingSphere();
             Future<GVRTexture> futureSphereTexture = gvrContext.loadFutureTexture(resource);
             environmentSphere.getRenderData().getMaterial().setMainTexture(futureSphereTexture);
-            if(environmentSceneObject != environmentSphere) {
+            if (environmentSceneObject != environmentSphere) {
                 mainScene.removeSceneObject(environmentSceneObject);
                 environmentSceneObject = environmentSphere;
-                mainScene.addSceneObject(environmentSphere);
+                mainScene.addSceneObject(environmentSceneObject);
             }
         }
-        sceneSerializer.setEnvironment(fullPath);
+        sceneSerializer.setEnvironmentData(fullPath);
         fileBrowserView.modelLoaded();
     }
 
-    private void initializeSurroundSphere() {
+    private void initializeSurroundingSphere() {
         GVRMaterial material = new GVRMaterial(gvrContext);
-        environmentSphere = new GVRSphereSceneObject(gvrContext,false,
+        environmentSphere = new GVRSphereSceneObject(gvrContext, false,
                 material);
-        environmentSphere.getTransform().setScale(ENVIRONMENT_SCALE,ENVIRONMENT_SCALE,
+        environmentSphere.getTransform().setScale(ENVIRONMENT_SCALE, ENVIRONMENT_SCALE,
                 ENVIRONMENT_SCALE);
     }
 
     private void addDefaultSurroundings(GVRContext gvrContext) {
-        Future<GVRTexture> futureCubemapTexture = gvrContext
-                .loadFutureCubemapTexture(new GVRAndroidResource(gvrContext, R.raw.default_environment));
-        initializeSurroundingCube();
-        environmentCube.getRenderData().getMaterial().setMainTexture(futureCubemapTexture);
-        environmentSceneObject = environmentCube;
-        mainScene.addSceneObject(environmentCube);
+        Future<GVRTexture> futureCubemapTexture = gvrContext.loadFutureTexture(new
+                GVRAndroidResource(gvrContext, R.drawable.skybox_gridroom));
+        initializeSurroundingSphere();
+        environmentSphere.getRenderData().getMaterial().setMainTexture(futureCubemapTexture);
+        environmentSceneObject = environmentSphere;
+        mainScene.addSceneObject(environmentSceneObject);
     }
 
     private void initializeSurroundingCube() {
         GVRMaterial cubemapMaterial = new GVRMaterial(gvrContext,
                 GVRMaterial.GVRShaderType.Cubemap.ID);
-        environmentCube = new GVRCubeSceneObject(gvrContext,false,
+        environmentCube = new GVRCubeSceneObject(gvrContext, false,
                 cubemapMaterial);
-        environmentCube.getTransform().setScale(ENVIRONMENT_SCALE,ENVIRONMENT_SCALE,
+        environmentCube.getTransform().setScale(ENVIRONMENT_SCALE, ENVIRONMENT_SCALE,
                 ENVIRONMENT_SCALE);
+    }
+
+    public void saveState() {
+        try {
+            sceneSerializer.exportScene();
+        } catch (IOException e) {
+            Log.d(TAG, "Could not export scene:%s", e.getMessage());
+        }
     }
 }

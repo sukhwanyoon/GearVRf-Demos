@@ -32,6 +32,7 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
 
     public interface DetachListener {
         void onDetach();
+        void onRemoveFromScene(GVRSceneObject gvrSceneObject);
     }
 
     protected EditableBehavior(CursorManager cursorManager, GVRScene scene, DetachListener listener) {
@@ -96,6 +97,13 @@ public class EditableBehavior extends GVRBehavior implements EditViewChangeListe
     @Override
     public void onScaleChange() {
         adjustArrowPosition(getOwnerObject());
+    }
+
+    @Override
+    public void removeFromScene() {
+        GVRSceneObject ownerObject = getOwnerObject();
+        onClose();
+        detachListener.onRemoveFromScene(ownerObject);
     }
 
     public static long getComponentType() {

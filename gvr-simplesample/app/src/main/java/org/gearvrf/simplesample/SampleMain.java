@@ -52,7 +52,7 @@ public class SampleMain extends GVRScript {
 
         SceneSerializer sceneSerializer = new SceneSerializer();
         try {
-            sceneSerializer.importScene(gvrContext,scene);
+            sceneSerializer.importScene(gvrContext,scene, null);
         } catch (IOException e) {
             Log.e(TAG,"Could not import scene:" + e.getMessage());
         }

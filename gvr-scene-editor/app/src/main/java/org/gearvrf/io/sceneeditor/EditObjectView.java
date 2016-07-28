@@ -44,6 +44,7 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
 
     public interface EditViewChangeListener extends WindowChangeListener {
         void onScaleChange();
+        void removeFromScene();
     }
 
     //Called on main thread
@@ -51,8 +52,9 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
                    EditViewChangeListener editViewChangeListener) {
         super(context, scene, settingsCursorId, R.layout.edit_object_layout, 5, 7);
         ((Button) findViewById(R.id.bDone)).setOnClickListener(this);
-        ((ImageView) findViewById(R.id.ivScaleUp)).setOnClickListener(this);
-        ((ImageView) findViewById(R.id.ivScaleDown)).setOnClickListener(this);
+        ((Button) findViewById(R.id.bScaleUp)).setOnClickListener(this);
+        ((Button) findViewById(R.id.bScaleDown)).setOnClickListener(this);
+        ((Button) findViewById(R.id.bRemoveFromScene)).setOnClickListener(this);
         tvSceneObjectName = (TextView) findViewById(R.id.tvSceneObjectName);
 
         sbYaw = (SeekBar) findViewById(R.id.sbYaw);
@@ -83,13 +85,17 @@ class EditObjectView extends BaseView implements OnClickListener, OnSeekBarChang
                 hide();
                 editViewChangeListener.onClose();
                 break;
-            case R.id.ivScaleUp:
+            case R.id.bScaleUp:
                 scaleObject(ScaleDirection.SCALE_UP);
                 editViewChangeListener.onScaleChange();
                 break;
-            case R.id.ivScaleDown:
+            case R.id.bScaleDown:
                 scaleObject(ScaleDirection.SCALE_DOWN);
                 editViewChangeListener.onScaleChange();
+                break;
+            case R.id.bRemoveFromScene:
+                hide();
+                editViewChangeListener.removeFromScene();
                 break;
         }
     }

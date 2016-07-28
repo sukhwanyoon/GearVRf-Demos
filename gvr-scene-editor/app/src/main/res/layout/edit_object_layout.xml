@@ -39,24 +39,22 @@
                 android:layout_gravity="center_vertical"
                 android:textAppearance="?android:attr/textAppearanceLarge"/>
 
-            <ImageView
-                android:id="@+id/ivScaleUp"
+            <Button
+                android:id="@+id/bScaleUp"
                 android:layout_width="41dp"
                 android:layout_height="match_parent"
-                android:src="@drawable/scaleup_icon"
+                android:background="@drawable/scale_up_button"
                 android:layout_gravity="center_vertical"
-                android:adjustViewBounds="true"
-                android:layout_weight="0.05"/>
+                android:layout_weight="0.02"/>
 
-            <ImageView
-                android:id="@+id/ivScaleDown"
-                android:layout_gravity="center_vertical"
+            <Button
+                android:id="@+id/bScaleDown"
                 android:layout_width="41dp"
                 android:layout_height="match_parent"
-                android:src="@drawable/scaledown_icon"
+                android:background="@drawable/scale_down_button"
                 android:layout_marginStart="16dp"
-                android:adjustViewBounds="true"
-                android:layout_weight="0.05"/>
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.02"/>
 
         </LinearLayout>
 
@@ -126,6 +124,14 @@
                 android:layout_gravity="center_vertical"
                 android:indeterminate="false"/>
         </LinearLayout>
+
+        <Button
+            android:id="@+id/bRemoveFromScene"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/removeFromScene"
+            />
 
     </LinearLayout>
     <Button
