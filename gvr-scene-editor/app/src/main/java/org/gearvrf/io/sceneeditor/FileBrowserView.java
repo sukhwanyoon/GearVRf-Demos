@@ -15,6 +15,7 @@
 
 package org.gearvrf.io.sceneeditor;
 
+import android.os.Environment;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -36,7 +37,7 @@ import java.util.List;
 
 class FileBrowserView extends BaseView implements OnClickListener, OnItemClickListener {
     private static final String TAG = FileBrowserView.class.getSimpleName();
-    private static final String DEFAULT_PATH = "/sdcard/SceneEditor";
+    private static final String DEFAULT_DIRECTORY = "/sdcard/SceneEditor";
     private final TextView tvTitle;
     private String path;
     private ListView listView;
@@ -74,8 +75,10 @@ class FileBrowserView extends BaseView implements OnClickListener, OnItemClickLi
         } else {
             filenameFilter = new SceneFileFilter(extensions);
         }
-        path = DEFAULT_PATH;
 
+        path = DEFAULT_DIRECTORY;
+        File file = new File(path);
+        file.mkdir();
         chdir(path);
     }
 

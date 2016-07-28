@@ -32,8 +32,8 @@
         useSrgbFramebuffer="false" >
 
         <mono-mode-parms
-            monoFullScreen="true"
-            monoMode="true" />
+            monoFullScreen="false"
+            monoMode="false" />
 
         <mode-parms
             allowPowerSave="true"

@@ -74,8 +74,6 @@ public class SceneEditorMain extends GVRMain {
 
     private GVRSceneObject loadModelIcon;
     private GVRTextViewSceneObject loadModelTextView;
-    private GVRSceneObject saveSceneIcon;
-    private GVRTextViewSceneObject saveSceneTextView;
     private GVRSceneObject loadEnvironIcon;
     private GVRTextViewSceneObject loadEnvironTextView;
 
@@ -106,11 +104,7 @@ public class SceneEditorMain extends GVRMain {
         addToSceneEditor(cubeSceneObject);
         addSceneEditorMenu();
         gvrContext.getEventReceiver().addListener(assetEventListener);
-        try {
-            sceneSerializer.importScene(gvrContext, mainScene, sceneLoaderListener);
-        } catch (IOException e) {
-            Log.e(TAG, "Could not import scene, no such file:%s", e.getMessage());
-        }
+        sceneSerializer.importScene(gvrContext, mainScene, sceneLoaderListener);
     }
 
     private SceneLoaderListener sceneLoaderListener = new SceneLoaderListener() {
@@ -209,7 +203,6 @@ public class SceneEditorMain extends GVRMain {
 
     private void addSceneEditorMenu() {
         addLoadModelIcon();
-        addSaveSceneIcon();
         addLoadEnvironIcon();
     }
 
@@ -222,9 +215,10 @@ public class SceneEditorMain extends GVRMain {
 
         SelectableBehavior fileBrowserBehavior = new SelectableBehavior(cursorManager);
         loadEnvironIcon.attachComponent(fileBrowserBehavior);
-        loadEnvironIcon.getTransform().setPosition(1f, -3, -5);
+        loadEnvironIcon.getTransform().setPosition(1.25f, -3, -5);
         loadEnvironIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-//        loadEnvironIcon.getTransform().rotateByAxis(-25, 0, 1, 0);
+        loadEnvironIcon.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT);
+
 
         mainScene.addSceneObject(loadEnvironIcon);
 
@@ -256,40 +250,10 @@ public class SceneEditorMain extends GVRMain {
                         }
                     });
                 }
-            }
-        });
-    }
-
-    private void addSaveSceneIcon() {
-        GVRMaterial material = new GVRMaterial(gvrContext);
-        material.setMainTexture(gvrContext.loadTexture(new GVRAndroidResource(gvrContext, R
-                .drawable.save_icon)));
-        saveSceneIcon = new GVRSceneObject(gvrContext, 1, 1);
-        saveSceneIcon.getRenderData().setMaterial(material);
-
-        SelectableBehavior saveSceneBehavior = new SelectableBehavior(cursorManager);
-        saveSceneIcon.attachComponent(saveSceneBehavior);
-        saveSceneIcon.getTransform().setPosition(0, -2.5f, -5);
-        saveSceneIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-
-        //mainScene.addSceneObject(saveSceneIcon);
-
-        saveSceneTextView = new GVRTextViewSceneObject(gvrContext, SCENE_SAVE_DISPLAY_STRING);
-        saveSceneTextView.setTextColor(Color.WHITE);
-        saveSceneTextView.setBackgroundColor(R.drawable.rounded_rect_bg);
-        saveSceneTextView.setGravity(Gravity.CENTER);
-
-        saveSceneTextView.getTransform().setPosition(0, -TEXT_VIEW_OFFSET, 0);
-        saveSceneTextView.getTransform().rotateByAxis(-45, 1, 0, 0);
-        saveSceneIcon.addChildObject(saveSceneTextView);
-        saveSceneTextView.setTextSize(6);
-
-        saveSceneBehavior.setStateChangedListener(new StateChangedListener() {
-            @Override
-            public void onStateChanged(SelectableBehavior behavior, ObjectState prev,
-                                       ObjectState current, Cursor cursor) {
-                if (current == ObjectState.CLICKED) {
-                    Log.d(TAG, "Reset scene now");
+                if(current == ObjectState.BEHIND) {
+                    behavior.getOwnerObject().getRenderData().getMaterial().setOpacity(0.5f);
+                } else {
+                    behavior.getOwnerObject().getRenderData().getMaterial().setOpacity(1f);
                 }
             }
         });
@@ -304,9 +268,9 @@ public class SceneEditorMain extends GVRMain {
 
         SelectableBehavior fileBrowserBehavior = new SelectableBehavior(cursorManager);
         loadModelIcon.attachComponent(fileBrowserBehavior);
-        loadModelIcon.getTransform().setPosition(-1f, -3, -5);
+        loadModelIcon.getTransform().setPosition(-1.25f, -3, -5);
         loadModelIcon.getTransform().rotateByAxis(-25, 1, 0, 0);
-//        loadModelIcon.getTransform().rotateByAxis(25, 0, 1, 0);
+        loadModelIcon.getRenderData().setRenderingOrder(GVRRenderingOrder.TRANSPARENT);
 
         mainScene.addSceneObject(loadModelIcon);
 
@@ -342,6 +306,12 @@ public class SceneEditorMain extends GVRMain {
                         }
                     });
                 }
+                if(current == ObjectState.BEHIND) {
+                    behavior.getOwnerObject().getRenderData().getMaterial().setOpacity(0.5f);
+                } else {
+                    behavior.getOwnerObject().getRenderData().getMaterial().setOpacity(1f);
+                }
+
             }
         });
     }
@@ -349,8 +319,6 @@ public class SceneEditorMain extends GVRMain {
     void setMenuVisibility(boolean visibility) {
         loadModelIcon.setEnable(visibility);
         loadModelTextView.setEnable(visibility);
-        saveSceneIcon.setEnable(visibility);
-        saveSceneTextView.setEnable(visibility);
         loadEnvironIcon.setEnable(visibility);
         loadEnvironTextView.setEnable(visibility);
     }

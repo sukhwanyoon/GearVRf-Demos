@@ -20,6 +20,7 @@ import org.gearvrf.utility.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -47,18 +48,23 @@ public class SceneSerializer {
     }
 
     public void importScene(GVRContext gvrContext, GVRScene gvrScene, SceneLoaderListener
-            sceneLoaderListener) throws IOException {
+            sceneLoaderListener) {
         File location = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
                 File.separator + DEFAULT_SCENE_NAME);
         importScene(gvrContext,gvrScene,location,sceneLoaderListener);
     }
 
     public void importScene(GVRContext gvrContext, GVRScene gvrScene, File location,
-                            SceneLoaderListener sceneLoaderListener) throws IOException {
+                            SceneLoaderListener sceneLoaderListener) {
         this.sceneLoaderListener = sceneLoaderListener;
         JsonParser parser = new JsonParser();
-        JsonElement jsonElement = parser.parse(new FileReader(location));
-        sceneData = gson.fromJson(jsonElement,SceneData.class);
+        JsonElement jsonElement = null;
+        try {
+            jsonElement = parser.parse(new FileReader(location));
+            sceneData = gson.fromJson(jsonElement,SceneData.class);
+        } catch (FileNotFoundException e) {
+            Log.d(TAG,"Could not load scene from file");
+        }
         loadEnvironment(gvrContext, gvrScene);
         loadSceneObjects(gvrContext, gvrScene);
     }
@@ -165,6 +171,9 @@ public class SceneSerializer {
     }
 
     private void loadSceneObjects(GVRContext gvrContext, GVRScene gvrScene) {
+        if(sceneData == null) {
+            return;
+        }
         List<SceneObjectData> sceneObjectDataList = sceneData.getSceneObjectDataList();
         if(sceneObjectDataList == null) {
             return;
