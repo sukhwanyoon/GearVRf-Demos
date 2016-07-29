@@ -72,6 +72,9 @@ public class SceneData {
     }
 
     void prepareForExport() {
+        if(sceneObjectDataList == null) {
+            return;
+        }
         for (SceneObjectData sod : sceneObjectDataList) {
             GVRSceneObject so = sod.getGvrSceneObject();
             if(so != null) {
