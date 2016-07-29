@@ -19,8 +19,8 @@ import android.os.Bundle;
 
 import org.gearvrf.GVRActivity;
 
-public class SceneEditorActivity extends GVRActivity {
-    private static final String TAG = SceneEditorActivity.class.getSimpleName();
+public class RedditViewerActivity extends GVRActivity {
+    private static final String TAG = RedditViewerActivity.class.getSimpleName();
     private RedditViewerMain redditViewerMain;
 
     @Override

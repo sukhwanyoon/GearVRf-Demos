@@ -15,7 +15,7 @@
  */-->
 
 <resources>
-    <string name="app_name">Scene Editor</string>
+    <string name="app_name">Reddit Viewer</string>
     <string name="scale_up_button">+++</string>
     <string name="scale_down_button">---</string>
     <string name="tv_scale">Scale</string>

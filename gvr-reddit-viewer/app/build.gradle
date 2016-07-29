@@ -22,9 +22,10 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "org.gearvrf.io.sceneeditor"
+        applicationId "org.gearvrf.io.redditviewer"
         minSdkVersion 19
         targetSdkVersion 19
+        multiDexEnabled true
     }
 
     buildTypes {
@@ -43,7 +44,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile project(':3DCursorLibrary')
     compile project(path: ':framework')
-    compile 'com.koushikdutta.ion:ion:2.+'
+    //compile 'com.koushikdutta.ion:ion:2.+'
 }
 
 //TODO export plugin to jar
